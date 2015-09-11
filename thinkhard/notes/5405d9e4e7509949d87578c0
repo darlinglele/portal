@@ -1,0 +1,92 @@
+在庞果网上的一个挑战题目：http://hero.pongo.cn/
+回文字符串是指从左到右和从右到左相同的字符串，现给定一个仅由小写字母组成的字符串，你可以把它的字母重新排列，以形成不同的回文字符串。 输入：非空仅由小写字母组成的字符串，长度不超过100； 输出：能组成的所有回文串的个数（因为结果可能非常大，输出对1000000007取余数的结果）。 例如：输入"aabb" 输出为2（因为“aabb”对应的所有回文字符串有2个：abba和baab）
+
+
+
+简单的分析之后： 长度为n的回文字符S串必须满足，S[i] = S[n-1-i],  i>=0 因此： 
+
+
+当n是偶数的时，S中字符都是成对的出现的，因此所有字符出现的次数为偶数当n为奇数时，出现唯一奇数次的字符，并且这个奇数次的字符一定在出现在中间位置
+
+所以很容易就可以字符计数判断输入字符串是否可以通过重新组合成回文字符串：
+
+
+遍历字符串的每一个字符，把计数结果放在数组counts[26] 当中， 如果counts中出现大于一次的奇数，说明字符无法组合成回文字符串
+
+满足组合成回文字符串的条件后，我们再来分析这些字符可以有多少种不同的组合：
+
+
+由于S[i] =S[n-1-i], 这样我们就只需要考虑前n/2个字符的排列
+
+现在问题很清楚了，在n/2个元素进行组合排列：
+
+
+如果n/2个元素是不同的，那么结果是n/2的全排列，(n/2)！。 考虑n/2个元素中可能出现相同元素，那么要将(n/2)！除以每一个重复元素的阶乘，例如输入“aaaabbbbc”, 前n/2个字符是[a,a,b,b], a和b分别出现2次，因此结果是4!/(2!*2!)
+
+
+
+这个题目是一个难度级别简单的题目，但如果自己没有准备充分的测试用例，很容易就会出错。
+题目给出的用例“aabb”, 过于简单,当然我们可以自己补充一些：
+
+
+例如，'"a", "aabbc", "aaaabbbbc", "abcdabcd"，这些我们可以手动的计算出来， 当做测试用例来验证程序。测试我们一般会找边界，100个字符是个边界， 例如：“abcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxy”
+
+下面这个用例长度是100 (<=100)， 但是我们不可能自己计算出它的结果，无法直接用来当做测试用例。这也是我做错的原因，不知道怎么测试这个边界！
+但实际上这个测试是非常关键，这个用例的需要计算(100/2)！这个值我们需要考虑用合适的类型来表示，而不是普通的integer, 如果是integer 将会溢出，结果肯定不对，但由于缺少测试用例，一般不好发现问题。
+
+
+总结一下，测试是个硬伤！如果题目中提供这个边界测试用例，难度就大大降低了！
+
+    public static int palindrome(String s) {
+        if (s == null || s.length() > 100 || s.length() < 1) {
+            return 0;
+        }
+        int[] counts = new int[26];
+        for (int i = 0; i < s.length(); i++) {
+            counts[s.charAt(i) - 'a']++;
+        }
+        if (!can(counts)) {
+            return 0;
+        }
+        BigInteger divisor = BigInteger.ONE;
+        for (int count : counts) {
+            divisor = divisor.multiply(permutation(count / 2));
+        }
+        BigInteger result = permutation(s.length() / 2).divide(divisor);
+        return result.mod(BigInteger.valueOf(1000000007)).intValue();
+    }
+
+    private static BigInteger permutation(int n) {
+        if (n < 0)
+            return BigInteger.ZERO;
+        if (n == 0)
+            return BigInteger.ONE;
+        BigInteger result = BigInteger.ONE;
+        while (n > 0) {
+            result = result.multiply(BigInteger.valueOf(n));
+            n--;
+        }
+        return result;
+    }
+
+    private static boolean can(int[] counts) {
+        int oddCount = 0;
+        for (int count : counts) {
+            if (count % 2 != 0) {
+                oddCount++;
+            }
+        }
+        return oddCount <= 1;
+    }
+
+
+
+
+
+
+
+
+                作者：u011459840 发表于2013-7-31 16:32:12 原文链接
+
+
+            阅读：573 评论：2 查看评论

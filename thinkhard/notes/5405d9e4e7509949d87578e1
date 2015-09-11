@@ -1,0 +1,77 @@
+上篇文章谈了针对一个struct对象使用using语句的时候是否会装箱的问题，结论是“不会”。尽管using语句是针对IDisposable接口的，但我们在调用的时候其实已经明确了目标方法，因此根本不需要装箱（或查找虚函数表）了。后来有同学在微博上提出，这点在《CLR via C#》这本书里提到过，于是我去翻了翻，原来是这样的：
+internal struct Point : IComparable {
+    private readonly Int32 m_x, m_y;
+
+    // Constructor to easily initialize the fields
+    public Point(Int32 x, Int32 y) {
+        m_x = x;
+        m_y = y;
+    }
+
+    // Implementation of type-safe CompareTo method
+    public Int32 CompareTo(Point other) {
+        // Use the Pythagorean Theorem to calculate
+        // which point is farther from the origin (0, 0)
+        return Math.Sign(Math.Sqrt(m_x * m_x + m_y * m_y));
+    }
+
+    public Int32 CompareTo(Object o) {
+        if (GetType() != o.GetType()) {
+            throw new ArgumentException("o is not a Point");
+        }
+
+        // Call type-safe CompareTo method
+        return CompareTo((Point)o);
+    }
+}
+
+public static class Program {
+    public static void Main() {
+        // Create two Point instances on the stack.
+        Point p1 = new Point(10, 10);
+        Point p2 = new Point(20, 20);
+
+        // p1 does NOT get boxed to call CompareTo.
+        // p2 does NOT get boxed because CompareTo(Point) is called.
+        Console.WriteLine(p1.CompareTo(p2)); // "-1"
+
+        // p1 DOES get boxed, and the reference is placed in c.
+        IComparable c = p1;
+        ...
+    }
+}
+我参考的是其第四版电子版，这段代码出现在第5章，133页开始。那位同学说，你看这里在调用CompareTo方法的时候，书上写的很明白没有装箱嘛。我看了之后表示这跟前一篇谈的内容其实并没有太多联系。假如从IL上看，这次调用是这样的：
+.method public hidebysig static 
+    void Main () cil managed 
+{
+    // Method begins at RVA 0x26b8
+    // Code size 36 (0x24)
+    .maxstack 3
+    .locals init (
+        [0] valuetype Point p1,
+        [1] valuetype Point p2
+    )
+
+    IL_0000: ldloca.s p1
+    IL_0002: ldc.i4.s 10
+    IL_0004: ldc.i4.s 10
+    IL_0006: call instance void Point::.ctor(int32, int32)
+    IL_000b: ldloca.s p2
+    IL_000d: ldc.i4.s 20
+    IL_000f: ldc.i4.s 20
+    IL_0011: call instance void Point::.ctor(int32, int32)
+    IL_0016: ldloca.s p1
+    IL_0018: ldloc.1
+    IL_0019: call instance int32 Point::CompareTo(valuetype Point)
+    IL_001e: call void [mscorlib]System.Console::WriteLine(int32)
+    IL_0023: ret
+} // end of method Program::Main
+请注意IL_0019，它明确地指出此次call指令的目标是Point类型的CompareTo，与IComparable接口没有任何关系。我们可以从Point定义中删除这个接口，这都不影响此次调用。而假如您返回上一篇文章，就会发现using语句生成的IL会查找IDisposable上的方法：
+IL_0017: constrained. .DisposableStruct
+IL_001d: callvirt instance void [mscorlib]System.IDisposable::Dispose()
+我们都知道，把一个struct对象赋值到IDisposable引用上之后会产生装箱，这才是上一篇文章中“疑惑”的由来。假如我们只是要直接调用Dispose方法，自然就不会想这么多了。我又粗略翻了翻《CLR via C#》相关内容，发现它没有提到过这一点，看来我也算弥补一个空白了，表示略为开心。
+不过话又说回来，假如有一个类型，它是这么实现的：
+public struct DisposableStruct : IDisposable {
+    void IDisposable.Dispose() { }
+}
+换句话说，这个struct并没有定义一个Dispose方法，而是显式实现了某个接口方法（不仅限于IDisposable接口）。在这个情况下，您有什么办法在C#里调用这个接口方法呢？当然，调用时不能在堆上产生任何对象。

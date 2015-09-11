@@ -1,0 +1,20 @@
+给政府做项目时我们一般都使用的是Java，服务器一般都是Weblogic或Tomcat(开发环境)。经常使用Java的人都知道，它在后台输出的信息一般都是黑底白字，或在Linux环境中可以改成黑绿字等，反正是很单调。我也从来没想过它能够变成彩色，但今天我发现了一个java类库——Jansi——它能够让你在控制台输出色彩缤纷的文字。先给大家看看效果：
+
+Jansi虽然是一个很小的Java包，却有着丰富的接口，让你配置各种输出效果，但用法非常的简单：
+import static org.fusesource.jansi.Ansi.*;
+import static org.fusesource.jansi.Ansi.Color.*;
+...
+System.out.println( ansi().eraseScreen().fg(RED).a("Hello").fg(GREEN).a(" World").reset() );
+相信你从上面的语义中能看出它是输出了红色的“Hello”和绿色的“World”。
+它还有一种更简洁的写法：
+System.out.println( ansi().eraseScreen().render("@|red Hello|@ @|green World|@") );
+这种写法能实现相同的效果。
+上面的用法是调用了Jansi输出接口生成彩色字。Jansi可以让你的System.out.println()方法直接输出彩色字体，用法是使用System.out.println()前，先执行：
+import org.fusesource.jansi.AnsiConsole;
+...
+AnsiConsole.systemInstall();
+	
+
+Jansi的这种技能实际上是利用ANSI转义代码来控制终端输出。很多高人用颜色各异的字符在终端屏幕上平凑出各种神奇复杂的精彩图案。这些代码的源文件通常保持为.ans后缀的文件，下面的这个图案就是利用Jansi输出MW-TSA2.ANS得到的，很神奇吧。
+
+请阅读全文：Jansi:让控制台输出彩色字符的方法。本文由外刊IT评论网(www.vaikan.com)原创发表文章地址：Jansi:让控制台输出彩色字符的方法，你也许会喜欢这些文章：你从未听说过的一种编程方式使用Node.js、Twilio实现手机控制门锁现代浏览器中内置的几个可以等效替代jQuery的功能皮克斯动画讲故事的22条法则番茄时间管理法(Pomodoro Technique)：一个番茄是如何让你工作更有效率的

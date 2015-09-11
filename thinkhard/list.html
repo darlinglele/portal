@@ -1,0 +1,904 @@
+
+
+
+
+
+
+
+
+
+
+
+<style>
+.detail-content p { color: #222; }
+.detail-content p { margin:0 10px; word-break:break-all; border-bottom:1px dotted #aaa; line-height:160%; }
+.detail-content p span { font:bold 1em sans; color:#444; width:90px; display:inline-block; line-height:200%; text-align:right; }
+.detail-content p span.area { font:italic 0.9em sans; color:blue; width:260px; text-align:left; margin-left:6px; }
+.detail-content p a {color:#0000C6;}
+.s-content { margin:10px; border-bottom:1px dotted gray; }
+.s-content p { margin:5px; line-height:160%; }
+.s-content p span { color:green; word-wrap:break-word; line-height:160%; }
+.detail-content p a.cookie_a_a{color:black;}
+</style>
+<form id="pagerForm" method="post" action="http://www.bjdjbh.com:80/reportinfo/unit/list.do">
+	<input type="hidden" name="pageNum" value="1" />
+	<input type="hidden" name="numPerPage" value="20" />
+	<input type="hidden" name="orderField" value="" />
+	<input type="hidden" name="orderDirection" value="" />
+</form>
+<div class="pageHeader">
+	<form rel="pagerForm" onsubmit="return navTabSearch(this);" action="http://www.bjdjbh.com:80/reportinfo/unit/list.do" method="post">
+	<div class="searchBar">
+		<ul class="searchContent">
+			<li>
+				<label>系统名称：</label>
+				<input type="text" name="name" value=""/>
+			</li>
+			<!--  li>
+				创建日期：<input type="text" name="time" class="date" readonly="true"  value=""/>
+			</li-->
+		    <li><div class="buttonActive"><div class="buttonContent"><button type="submit"> 检 索 </button></div></div></li>
+		</ul>
+	</div>
+	</form>
+</div>
+
+<div class="pageContent">
+	<table class="list" width="100%" layoutH="60">
+		<thead>
+			<tr>
+				<th width="5%" orderField="name"><div align="left">序号</div></th>
+				<th width="12%" orderField="name"><div align="left">日期</div></th>
+				<th width="20%" orderField="name"><div align="left">系统</div></th>
+				<th width="12%" orderField="num"><div align="left">正常</div></th>
+				<th width="15%"><div align="left">隐患</div></th>
+				<th width="15%"><div align="left">事件</div></th>
+				<th ><div align="left">操作</div></th>
+			</tr>
+		</thead>
+		<tbody>
+		   
+		   
+			<tr target="sid_user" rel="1">
+				<td >1</td>
+				<td >2014-05-21</td>
+				<td>表面工程研究所</td>
+				<td>
+					<ul>
+					  已经完成上报！
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=110000000000127726080214601" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080214601&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=110000000000127726080214601" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080214601&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080214601" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080214601" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >2</td>
+				<td >2014-05-21</td>
+				<td>北京-都柏林国际学院教务管理系统</td>
+				<td>
+					<ul>
+					  已经完成上报！
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=4028f18144622ffc0144622ffcc80000" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc0144622ffcc80000&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=4028f18144622ffc0144622ffcc80000" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc0144622ffcc80000&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc0144622ffcc80000" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc0144622ffcc80000" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >3</td>
+				<td >2014-05-21</td>
+				<td>北京工业大学本科生招生网</td>
+				<td>
+					<ul>
+					  已经完成上报！
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=4028f18144622ffc01446230c0e30003" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc01446230c0e30003&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=4028f18144622ffc01446230c0e30003" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc01446230c0e30003&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc01446230c0e30003" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc01446230c0e30003" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >4</td>
+				<td >2014-05-21</td>
+				<td>研究生信息管理系统</td>
+				<td>
+					<ul>
+					  已经完成上报！
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=4028f18144622ffc01446230f8a50004" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc01446230f8a50004&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=4028f18144622ffc01446230f8a50004" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc01446230f8a50004&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc01446230f8a50004" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc01446230f8a50004" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >5</td>
+				<td >2014-05-21</td>
+				<td>北京工业大学网络教学平台</td>
+				<td>
+					<ul>
+					  已经完成上报！
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=4028f18144622ffc0144623183be0005" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc0144623183be0005&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=4028f18144622ffc0144623183be0005" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc0144623183be0005&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc0144623183be0005" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc0144623183be0005" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >6</td>
+				<td >2014-05-21</td>
+				<td>新闻网</td>
+				<td>
+					<ul>
+					  已经完成上报！
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=110000000000127726080345901" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080345901&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=110000000000127726080345901" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080345901&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080345901" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080345901" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >7</td>
+				<td >2014-05-21</td>
+				<td>北京工业大学就业服务平台</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=4028f18144622ffc01446230524b0001" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=4028f18144622ffc01446230524b0001" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc01446230524b0001&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=4028f18144622ffc01446230524b0001" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc01446230524b0001&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc01446230524b0001" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc01446230524b0001" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >8</td>
+				<td >2014-05-21</td>
+				<td>北京工业大学自主招生网上报名系统</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=4028f18144622ffc0144623085f50002" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=4028f18144622ffc0144623085f50002" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc0144623085f50002&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=4028f18144622ffc0144623085f50002" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc0144623085f50002&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc0144623085f50002" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc0144623085f50002" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >9</td>
+				<td >2014-05-21</td>
+				<td>北京市高校精品课程集成平台</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=4028f18144622ffc01446232cd940006" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=4028f18144622ffc01446232cd940006" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc01446232cd940006&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=4028f18144622ffc01446232cd940006" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc01446232cd940006&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc01446232cd940006" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc01446232cd940006" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >10</td>
+				<td >2014-05-21</td>
+				<td>图书馆自动化集成系统 </td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=4028f18144622ffc01446232fcc20007" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=4028f18144622ffc01446232fcc20007" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc01446232fcc20007&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=4028f18144622ffc01446232fcc20007" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc01446232fcc20007&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=4028f18144622ffc01446232fcc20007" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=4028f18144622ffc01446232fcc20007" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >11</td>
+				<td >2014-05-21</td>
+				<td>新型功能材料教育部重点实验室</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=110000000000127726080351201" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=110000000000127726080351201" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080351201&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=110000000000127726080351201" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080351201&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080351201" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080351201" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >12</td>
+				<td >2014-05-21</td>
+				<td>宣传教育网</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=110000000000127726080356501" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=110000000000127726080356501" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080356501&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=110000000000127726080356501" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080356501&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080356501" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080356501" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >13</td>
+				<td >2014-05-21</td>
+				<td>学生工作信息系统</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=110000000000127726080361501" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=110000000000127726080361501" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080361501&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=110000000000127726080361501" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080361501&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080361501" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080361501" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >14</td>
+				<td >2014-05-21</td>
+				<td>循环经济研究院网站</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=110000000000127726080366701" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=110000000000127726080366701" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080366701&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=110000000000127726080366701" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080366701&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080366701" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080366701" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >15</td>
+				<td >2014-05-21</td>
+				<td>制冷与低温工程系</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=110000000000127726080382001" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=110000000000127726080382001" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080382001&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=110000000000127726080382001" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080382001&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080382001" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080382001" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >16</td>
+				<td >2014-05-21</td>
+				<td>中国建设银行会计业务处理系统MAS3.0</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=110000000000127726080387301" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=110000000000127726080387301" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080387301&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=110000000000127726080387301" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080387301&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080387301" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080387301" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >17</td>
+				<td >2014-05-21</td>
+				<td>财务信息系统</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=110308000000127746948854701" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=110308000000127746948854701" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110308000000127746948854701&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=110308000000127746948854701" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110308000000127746948854701&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110308000000127746948854701" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110308000000127746948854701" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >18</td>
+				<td >2014-05-21</td>
+				<td>博士报名系统</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=110000000000127726080222801" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=110000000000127726080222801" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080222801&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=110000000000127726080222801" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080222801&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080222801" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080222801" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >19</td>
+				<td >2014-05-21</td>
+				<td>薄膜材料实验室信息系统</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=110000000000127726080228601" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=110000000000127726080228601" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080228601&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=110000000000127726080228601" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080228601&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080228601" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080228601" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+			<tr target="sid_user" rel="1">
+				<td >20</td>
+				<td >2014-05-21</td>
+				<td>党委宣传部网站</td>
+				<td>
+					<ul>
+					  
+					  
+					  
+					  <li ><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_normal.do?id=110000000000127726080244901" target="ajaxTodo" ><span >正常</span></a></li>
+					  
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li><a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/sys_danger.do?id=110000000000127726080244901" target="navTab" rel="danger_report" mask="true"><span> 隐 患</span></a></li>
+						<li><a  href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080244901&datetime=2014-05-21" target="navTab" width="800" height="500" mask="true" rel="dangerDetail" title="今日隐患上报">
+						<span>查 看(0)</span></a>
+						</li>
+					   
+					</ul>
+					
+				</td>
+				<td>
+					<ul>
+						<li>
+							<a class="button" href="http://www.bjdjbh.com:80/reportinfo/unit/showEvent.do?id=110000000000127726080244901" target="navTab" rel="event_report"><span> 事 件 </span></a>
+							<a style="margin-left: 5px;"  href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080244901&time=2014-05-21" target="navTab" rel="eventDetail" mask="true" title="今日事件上报">
+							<span> 查 看  (0)</span></a>
+						</li>
+					</ul>
+					
+				</td>
+				<td>
+				  <ul>
+				   <li><a href="http://www.bjdjbh.com:80/reportinfo/unit/dangerAllTree.do?sysid=110000000000127726080244901" id="dangertree" target="navTab" width="800" height="500" mask="true" rel="dangerDetail"><span>隐患上报历史</span></a>
+                       <a href="http://www.bjdjbh.com:80/reportinfo/unit/systemEventTree.do?systemId=110000000000127726080244901" target="navTab" rel="eventDetail" mask="true"><span>事件上报历史</span></a>
+                    </li>
+				  <ul>
+				</td>
+			</tr>
+		 
+
+	
+		</tbody>
+	</table>
+	
+	<div class="panelBar" >
+		<div class="pages">
+			<span>显示</span>
+			<select name="numPerPage" onchange="navTabPageBreak({numPerPage:this.value})">
+				<option value="20">20</option>
+				<option value="50">50</option>
+				<option value="100">100</option>
+				<option value="200">200</option>
+			</select>
+			<span>条，共34条</span>
+		</div>
+		<div class="pagination" targetType="navTab" totalCount="34" numPerPage="20" pageNumShown="10" currentPage="1"></div>
+	</div>
+
+</div>
+

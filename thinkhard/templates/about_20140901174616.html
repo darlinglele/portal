@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{%block main%}
+<div class="container-liquid">
+	<!-- Example row of columns -->
+	<div class="row">
+		<div class="col-md-2 no-right-padding right-border">
+
+		</div>              
+		<div class="col-md-8">
+			<!-- {% autoescape off %} {{note.content}} {%endautoescape%} -->
+			<div class="my-panel-group">
+				<div class="panel panel-default">
+					<div class="panel-heading" data-toggle="collapse" data-parent="#">					
+						<span class='glyphicon glyphicon-user
+						'></span> 基本信息
+					</div>
+					<ul class="list-group">
+						<li class="list-group-item">林志雄，男， 27岁，福建莆田人，现居住于北京 </li>
+						<li class="list-group-item">手机: 13641165094</li>
+						<li class="list-group-item">邮箱: lessisawesome@gmail.com</li>
+						<li class="list-group-item">本科：陕西师范大学(211) 计算机科学与技术专业 2010年毕业</li>				    
+					</ul>		  							  
+				</div>
+
+				<div class="panel panel-default">
+					<div class="panel-heading"><span class='glyphicon glyphicon-road'></span> 工作经历</div>
+
+					<table class="table">
+						<tr><th>#</th><th>公司名称</th><th>起始</th><th>结束</th><th>公司地址</th><th>工作职位</th></tr>
+						<tr><td>1</td><td><a href="">Objeciva</a></td><td>2010年3月</td><td>2011年8月</td><td>西安</td><td>软件工程师</td></tr>
+						<tr><td>2</td><td><a href="http://www.thoughtworks.com/cn/">ThoughtWorks</a></td><td>2011年8月</td><td>2012年3月</td><td>西安</td><td>软件工程师</td></tr>
+						<tr><td>3</td><td><a href="http://www.pwccn.com/home/chi/index_chi.html">普华永道</a></td><td>2012年4月</td><td>2014年4月</td><td>北京</td><td>软件工程师</td></tr>
+					</table>
+				</div>
+				
+				<div class="panel panel-default">
+					<div class="panel-heading"><span class='glyphicon glyphicon-align-justify'></span> 技术概览</div>
+					<ul class="list-group">
+						<li class="list-group-item">软件方法：多年的敏捷软件开发经验， 熟悉集成、重构和自动化测试等技术实践</li>
+						<li class="list-group-item">系统设计：主导过多个基于asp.net的企业应用开发、集成和维护</li>
+						<li class="list-group-item">Web前端：对web前端技术很感兴趣，能够独立完成复杂UI的交互设计</li>
+						<li class="list-group-item">编程语言：Java、C#、Python、C 以及JavaScript等编程语言</li>				
+						<li class="list-group-item">技术框架：Asp.net mvc, spring mvc以及Django等web框架</li>
+						<li class="list-group-item">数据库：Sql server, MongoDB</li>
+						<li class="list-group-item">代码设计：面向对象设计模式、函数式编程以及代码重构方法</li>
+						<li class="list-group-item">构建和测试： NUnit, JUnit, Selenium, Cucumber, Ant 和 NAnt</li>
+						<li class="list-group-item">开发环境：熟悉Mac osx, Linux操作系统；熟悉Intellij idea（最懂程序员的IDE，我以为不为过）、Visutal studio和Vim</li>
+						<li class="list-group-item">其他工具：Github, SVN, Git 和 Linux useful commands</li>
+					</ul>				  
+				</div>
+				<!-- 兴趣和方向 -->
+				<div class="panel panel-default">
+					<div class="panel-heading"><span class='glyphicon glyphicon-star
+						'></span> 感兴趣的技术</div>
+						<p>目前正在学习和关注的技术：数据挖掘、机器学习、分布式计算，是该技术领域的初学者，很希望有机会参与该领域相关的工作和研究。下面是我对该领域了解进度的概括，希望有机会得到前辈们的指导。 点击链接可以查看Github上Python(C/API)实现的部分代码。</p>
+
+						<table class="table">
+							<tr><th>#</th><th>分类</th><th>回归</th><th>聚类</th><th>关联分析</th><th>特征选择</th><th>预处理数据</th></tr>
+
+							<tr>
+								<td>1</td>
+								<td>感知器、K最近邻方法、朴素贝叶斯方法、逻辑回归、决策树</td>
+								<td>线性回归、逻辑回归</td><td>K均值、层次聚类</td>
+								<td>Apriori，FP-growth</td><td>VSM模型，TF-IDF, 信息增益等方法</td>
+								<td>缺失数据的处理， 数据标准化</td>
+							</tr>
+
+							<tr>
+								<td>1</td>
+								<td>感知器、K最近邻方法、朴素贝叶斯方法、逻辑回归、决策树</td>
+								<td>线性回归、逻辑回归</td><td>K均值、层次聚类</td>
+								<td>Apriori，FP-growth</td><td>VSM模型，TF-IDF, 信息增益等方法</td>
+								<td>缺失数据的处理， 数据标准化</td>
+							</tr>
+
+						</table>
+			  			<!-- <ul class="list-group">
+						    <li class="list-group-item">分类：感知器、K最近邻方法、朴素贝叶斯方法、逻辑回归、决策树，了解这些常见分类方法的理论</li>
+						    <li class="list-group-item">回归：线性回归、逻辑回归</li>
+						    <li class="list-group-item">聚类：K均值、层次聚类算法 </li>
+							<li class="list-group-item">关联分析： Apriori，FP-growth算法</li>							
+							<li class="list-group-item">特征选择：VSM模型，TF-IDF, 信息增益等方法</li>							
+							<li class="list-group-item">数据预处理：缺失数据的处理， 数据标准化</li>							
+						</ul>				   -->
+					</div>
+
+					<div class="panel panel-default">
+						<div class="panel-heading">					
+							<span class='glyphicon glyphicon-heart'></span> 求职意向
+						</div>
+						<p>
+							软件工程师，机器学习或数据挖掘相关；可以调剂
+						</p>
+					</div>
+
+					<div class="panel panel-default">
+						<div class="panel-heading">					
+							<span class='glyphicon glyphicon-trash'></span> 您为什么看到这份简历？
+						</div>
+						<p>
+							我为什么辞职，职业生涯心路历程（Optional for interivewer）：
+							我的软件开发之路，道路始于迷茫。四年前的一个面试官问我，5年的职业规划， 我想了一会，成为一个架构师吧？ 
+							大概自己都不知道什么是架构师的时候，我却要成为它，只有年轻的时候有这么大勇气！
+
+							于是踏出校门走上职场，感觉就像被放在轨道上行走的汽车！第一个雇主Objectiva提供给很多的学习机会，其中我认为最重要的是培养了我的团队意识，以前自己像郊外的汽车，走走停停，可现在轨道后方还有别的车了。这使我学会小心谨慎、理解和尊重其他人的努力，也让我体会到与人分享成果的那种喜悦。
+
+							就这样磨合了一段时间，对自己能力虽未达满意的程度，内心的动力却早已经爆发了，渴望去更远、未曾见过的地方。 这一切在我加入ThoughtWorks时扑面而来，像一股台风，迷了眼睛。。。当我睁开眼睛，一切都是那样新，新的理念，新的环境，新的工作方式，新的同事。。。 在这里我得到了新的装备，学到了很多新的技术, 可要说一件最重要的东西就是开发卓越的软件。 在这里有一系列的机制和方法来评价软件的好坏，坚持这样做的好处是软件每天都会变好一点而不是变坏。我们用敏捷开发方法，一开始我觉得敏捷本身是对的，后来我又发现敏捷只是在做对的事情。。。
+
+							似乎已经上了快车道，此时我却选择离开。尽管后来我对此也觉得懊悔，甚至想要重新回去，然而路还要继续前进，哪怕只是徒步！2012年春天，我加入了PwC北京公司直到现在。 回想过去的两年，不同以往的是我觉得开始慢了下来，在沉淀和思考。 在这里，我开始想起自己最初的回答面试官哪个问题的答案，架构师。我不是个技术多么牛的人，刚好在一些难度不大的项目上，我开始做项目的前期需求分析，架构设计、开发和发布。 也许这是我学到新东西最少的两年，可是确实我让自己的发挥的尽量充分的两年， 然而在这过后，迎来了一场的空虚。 我需要更多的能力，而这里我似乎找到那份热情，而我正和我所向往的前方，越偏越远。。。
+
+							我深深感到自己是个喜欢追逐的人，停不下来！ 当我发现自己走的慢了、歪了，我就会鞭策自己、调整自己。 当我一开始接触机器学习时，感到一个新的世界在我面前。 对我来说，机器学习非常新奇，它有一种魔法般的能力，打破我以往对技术的认识，不仅开扩了我的视野， 最要命的事，它让我着迷！没有人会对魔术背后隐藏的秘密感兴趣，于是开始我的魔术探究之路！对于机器学习，我确实是刚刚起步，磕磕绊绊，但我会继续跟随兴趣，坚持到底！
+
+						</p>
+					</div>
+				</div><!-- panel-group -->
+
+			</div>
+
+			<div class="col-md-2 no-right-padding right-border">
+
+			</div>
+			{%endblock%}

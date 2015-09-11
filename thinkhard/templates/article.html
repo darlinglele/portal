@@ -1,0 +1,33 @@
+{% load staticfiles %}
+{% load get_extras %}
+
+<div class="article">     
+        <div class="article-title">
+            <h3><a href="{{doc.link}}" target="blank">{{doc.title}}</a></h3>            
+            <span>类别：{{doc.category}}</span>
+            <span>来自：{{doc.site_title}}</span>
+            <span> 作者：{{doc.author}}</span>
+            <span> 时间：{{doc.published_parsed}}</span>
+            <span>关键字：</span>
+            {%for x in doc.keywords%}
+                <span class="label label-info">{{x}}</span>
+             {%endfor%}   
+        </div>                                    
+
+     </div>   
+    <div class="article-text">           
+        {% autoescape off %}{{doc.content}}{% endautoescape %}
+    </div>
+</div>
+<script>    
+            $('#star').bind('click',function(){
+              id = $('.item-selected')[0].id;
+              $(this).button('loading');
+              $.ajax({
+                  url: "/star/"+ id,
+                  context: document.body
+                }).done(function(data) {  
+                    $("#star").button('complete');
+                });     
+            })
+</script>

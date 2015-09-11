@@ -1,0 +1,73 @@
+.NET提供struct类型，正确使用可以减少对象数量，从而降低GC压力，提高性能。不过有时候我会发现，某些同学有这方面的意识，但是有时候一疏忽一偷懒，就没有得到相应的效果了。这里举一个真实的例子：假设我们要将一对int作为字典的键，用于映射到某些数据，那么你会怎么做？当然我们可以直接使用Tuple<int, int>，但这样就可能产生大量的对象。于是我们打算使用自定义的值类型：
+private struct MyKey {
+    private readonly int _a;
+    private readonly int _b;
+
+    public MyKey(int a, int b) {
+        _a = a;
+        _b = b;
+    }
+}
+这么做正确吗？假如你做一下测试，会发现它已经可以“正确使用”了，但实际上还是错误的。我们用它来做字典的键，会依赖GetHashCode和Equals两个方法，由于MyKey没有提供这两个方法，就会自动使用System.ValueType里的实现，这便引起了装箱。
+好吧，那么我们就来实现一下：
+private struct MyKey {
+    // ...
+
+    public override int GetHashCode() {
+        // ...
+    }
+
+    public override bool Equals(object that) {
+        // ...
+    }
+}
+那么现在呢？可能现在您就会比较容易意识到，即便GetHashCode已经没有问题了，但是Equals方法还是会引起装箱，因为that参数依然是object类型。
+怎么破？当然有办法，因为像HashSet<T>或是Dictionary<TKey, TValue>集合其实都不会直接调用GetHashCode和Equals方法，都是通过一个IEqualityComparer<T>对象来委托调用的：
+public interface IEqualityComparer<in T> {
+    bool Equals(T x, T y);
+    int GetHashCode(T obj);
+}
+假如在创建集合的时候没有提供比较器，则会使用默认的EqualityComparer<T>.Default对象，它的构造方法是这样的：
+private static EqualityComparer<T> CreateComparer<T>() {
+    Contract.Ensures(Contract.Result<EqualityComparer<T>>() != null);
+
+    RuntimeType t = (RuntimeType)typeof(T);
+    // Specialize type byte for performance reasons 
+    if (t == typeof(byte)) {
+        return (EqualityComparer<T>)(object)(new ByteEqualityComparer());
+    }
+
+    // If T implements IEquatable<T> return a GenericEqualityComparer<T>
+    if (typeof(IEquatable<T>).IsAssignableFrom(t)) {
+        return (EqualityComparer<T>)RuntimeTypeHandle.CreateInstanceForAnotherGenericParameter(
+                (RuntimeType)typeof(GenericEqualityComparer<int>), t);
+    }
+
+    // If T is a Nullable<U> where U implements IEquatable<U> return a NullableEqualityComparer<U>
+    if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>)) {
+        RuntimeType u = (RuntimeType)t.GetGenericArguments()[0];
+        if (typeof(IEquatable<>).MakeGenericType(u).IsAssignableFrom(u)) {
+            return (EqualityComparer<T>)RuntimeTypeHandle.CreateInstanceForAnotherGenericParameter(
+                    (RuntimeType)typeof(NullableEqualityComparer<int>), u);
+        }
+    }
+
+    // If T is an int-based Enum, return an EnumEqualityComparer<T>
+    // See the METHOD__JIT_HELPERS__UNSAFE_ENUM_CAST and METHOD__JIT_HELPERS__UNSAFE_ENUM_CAST_LONG cases in getILIntrinsicImplementation 
+    if (t.IsEnum && Enum.GetUnderlyingType(t) == typeof(int)) {
+        return (EqualityComparer<T>)RuntimeTypeHandle.CreateInstanceForAnotherGenericParameter(
+                (RuntimeType)typeof(EnumEqualityComparer<int>), t);
+    }
+
+    // Otherwise return an ObjectEqualityComparer<T> 
+    return new ObjectEqualityComparer<T>();
+}
+可以看出，根据不同的情况它会使用各式不同的比较器。其中最适合我们的自然就是实现IEquatable<T>接口的分支了。于是我们可以这么做：
+struct MyKey : IEquatable<MyKey> {
+    // ...
+
+    public bool Equals(MyKey that) {
+        // ...
+    }
+}
+这才是最终符合我们要求的做法。

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{%block main%}
+<div class="container-liquid">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="col-md-2 no-right-padding right-border">
+        	
+        </div>              
+        <div class="col-md-8">
+        <!-- {% autoescape off %} {{note.content}} {%endautoescape%} -->
+        	<div class="my-panel-group">
+		        <div class="panel panel-default">
+				<div class="panel-heading">					
+						<span class='glyphicon glyphicon-user
+						'></span> 基本信息
+				</div>
+
+					<ul class="list-group">
+					    <li class="list-group-item">林志雄，男， 27岁，福建莆田人，现居住于北京 </li>
+					    <li class="list-group-item">手机: 13641165094</li>
+					    <li class="list-group-item">邮箱: lessisawesome@gmail.com</li>
+					    <li class="list-group-item">本科：陕西师范大学(211) 计算机科学与技术专业 2010年毕业</li>				    
+				  	</ul>		  							  
+				</div>
+	        
+				<div class="panel panel-default">
+					<div class="panel-heading"><span class='glyphicon glyphicon-road'></span> 工作经历</div>
+		  			
+				  <table class="table">
+				  	<tr><th>#</th><th>公司名称</th><th>起始</th><th>结束</th><th>公司地址</th><th>工作职位</th></tr>
+					<tr><td>1</td><td><a href="">Objeciva</a></td><td>2010年3月</td><td>2011年8月</td><td>西安</td><td>软件工程师</td></tr>
+					<tr><td>2</td><td><a href="http://www.thoughtworks.com/cn/">ThoughtWorks</a></td><td>2011年8月</td><td>2012年3月</td><td>西安</td><td>软件工程师</td></tr>
+					<tr><td>3</td><td><a href="http://www.pwccn.com/home/chi/index_chi.html">普华永道</a></td><td>2012年4月</td><td>2014年4月</td><td>北京</td><td>软件工程师</td></tr>
+				  </table>
+				</div>
+				
+				<div class="panel panel-default">
+					<div class="panel-heading"><span class='glyphicon glyphicon-align-justify'></span> 技术概览</div>
+			  			<ul class="list-group">
+						    <li class="list-group-item">软件方法：2年的敏捷开发， 熟悉集成、重构和自动化测试等技术实践</li>
+						    <li class="list-group-item">系统设计：主导过多个基于asp.net的企业应用开发和维护</li>
+						    <li class="list-group-item">Web前端：对web前端技术很感兴趣，能够独立完成复杂UI的交互设计</li>
+							<li class="list-group-item">编程语言：Java、C#、Python、C 以及JavaScript等编程语言</li>				
+							<li class="list-group-item">技术框架：Asp.net mvc, spring mvc以及Django等web框架</li>
+							<li class="list-group-item">代码设计：面向对象设计模式、函数式编程以及代码重构方法</li>
+							<li class="list-group-item">测试框架： NUnit, JUnit, Selenium,  Cucumber, Ant, NAnt</li>
+							<li class="list-group-item">开发环境：熟悉Mac osx, Linux操作系统；熟悉Intellij idea和Visutal studio</li>
+							<li class="list-group-item">其他工具：Github, SVN, Git</li>
+					    </ul>				  
+				</div>
+				<!-- 兴趣和方向 -->
+				<div class="panel panel-default">
+						<div class="panel-heading"><span class='glyphicon glyphicon-star'></span> 感兴趣的技术</div>
+						<p>我目前正在学习和关注的技术： 数据挖掘、机器学习、分布式计算</p>
+			  			<ul class="list-group">
+						    <li class="list-group-item">数年敏捷开发方法， 乐于思考方法改进</li>
+						    <li class="list-group-item">多个基于asp.net的企业应用架构设计经验</li>
+						    <li class="list-group-item">对web前端技术很感兴趣, 能独立用户体验设计</li>
+							<li class="list-group-item">Java、C#、Python以及JavaScript等编程语言</li>							
+							<li class="list-group-item">Asp.net mvc, spring mvc 以及Django等web框架</li>
+							<li class="list-group-item">代码设计：面向对象设计模式、函数式编程以及代码重构方法</li>
+							<li class="list-group-item">测试框架： NUnit, JUnit, Selenium,  Cucumber, Ant, NAnt</li>
+							<li class="list-group-item">开发环境：Mac osx, Linux, Intellij idea, Visutal studio, vim</li>
+							<li class="list-group-item">其他工具：Github, SVN, Git</li>
+					    </ul>				  
+				</div>
+
+			</div><!-- panel-group -->
+
+
+
+        </div>
+
+
+
+
+
+
+
+        <div class="col-md-2 no-right-padding right-border">
+        	
+        </div>
+{%endblock%}

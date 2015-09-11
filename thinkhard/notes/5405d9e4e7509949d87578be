@@ -1,0 +1,177 @@
+年初的时候看到@段念-段文韬 的这篇文章《使用树莓派制作的远程开门器》后，觉得硬件编程似乎没有想象的难。
+ 之前认为硬件编程可能需要学习新的编程语言，需要特别的编程环境。然而树莓派使用Linux操作系统环境，只要Linux支持的编程语言 ，都可以成为你的选择。当语言环境不是问题的时候，对于我来说，我最感兴趣的部分是如何用树莓派来控制一些低速的外部设备，例如 ：继电器、小马达。 一般的PC并不提供这些通用接口，PC只提供一些高速设备的接口如USB。 而树莓派不止提供了USB接口，还提供了GPIO接口，有了这个接口使得控制通用的外部设备得以实现。
+开始之前，请用最方便的方式连入树莓派。我自己没有额外的显示器，所以只好通过MBA的Terminal直接SSH上去。 树莓派预装了Python，但是你需要安装RPI GPIO
+ python来驱动GPIO。安装包地址：http://log.liminastudio.com/writing/tutorials/tutorial-how-to-use-your-raspberry-pi-like-an-arduino 。安装之后，在程序中import就可以控制GPIO：
+
+import RPi.GPIO as GPIO
+GPIO.setup(7, GPIO.OUT)
+GPIO.output(7, True)
+GPIO.output(7,False)
+代码中树莓派通过指定GPIO接口向外部发送信号，如果从外部向树莓派输入信号，则指定GPIO.input。整个小车需要的部件就是四个轮子，可以单独控制，所以下面我们只说说如何来控制其中的一个电机。 
+第一部分： 电机控制电路
+
+接通VCC，GND 模块电源指示灯亮  
+
+
+IA1输入高电平，IA1输入低电平，【OA1 OB1】电机正转；
+
+IA1输入低电平，IA1输入高电平，【OA1 OB1】电机反转；
+
+IA2输入高电平，IA2输入低电平，【OA2 OB2】电机正转；
+
+IA2输入低电平，IA2输入高电平，【OA2 OB2】电机反转；
+为了简化电路设计，考虑用驱动模块控制。这是我在淘宝购买的两路电机驱动
+ H桥 L9110 电机驱动模块 ，接上它，你只需要下面简单的连接，就可以让树莓派来控制电机了。驱动模块有电源、信号输入接口以及电源输出接口：
+
+
+电源输入，VCC，GND分别是输入电源的正负极，可以用电池组来供电。 注意不能接反，否则驱动模块可能短时间内发烫，甚至烧坏。 信号输入，IA1 IB1， IA2 IB2分别是两对信号输入接口，接受来自树莓派信号的控制驱动模块的电源输出，达到电机正转反正的目的。电源输出，电源输出接口OA1 OB1,OA2 OB2 （绿色部分）分别是两对输出电流到电机的接口，通过他们为电机供电。当你连接好这些接口后，模块上的连接也就全部完成了，接下来就要把模块上的IA1 IB1， IA2 IB2连接到树莓派程序指定的GPIO。
+
+
+
+BOARD模式下的接口定义
+第二部分：连接GPIO
+要使用树莓派为GPIO提供连个设置模式，BOARD和BCM, 模式的不同GPIO的每一个接口的定义也不同（上图是BOARD模式下的定义），使用时必须在代码中必须明确指定他的模式：
+
+import RPi.GPIO as GPIO  #GPIO package
+GPIO.setmode(GPIO.BOARD) #设置模式
+GPIO.setup(13, GPIO.OUT) #指定接口是输出还是输入
+GPIO.setup(15, GPIO.OUT) #指定接口是输出还是输入
+GPIO.output(13, GPIO.HIGH) #输出高电平
+GPIO.output(15, GPIO.LOW) #输出低电平这六行就是要让一个电机转起来的全部代码。代码中的指定了13 和15两个输出接口为驱动模块提供控制信号。我们要做的是在上图中找到这两个GPIO，把它们连接到IA1和IB1, 这个时候运行程序，电机转动。
+
+当然，为代码更好读，可以专门写一个Wheel类来控制轮子。单个轮子只有三个操作， 前进、后退、停止，现在来封装这些操作：
+第三部分：封装轮子
+
+class Wheel:
+	pins ={'a':[13,15],'b':[16,18],'c':[19,21],'d':[22,24]}# 这里指定了四个轮子所使用的8个GPIO接口
+	def __init__(self,name):
+		self.name = name
+		self.pin = Wheel.pins[self.name]
+		GPIO.setmode(GPIO.BOARD)
+		GPIO.setup(self.pin[0],GPIO.OUT)
+		GPIO.setup(self.pin[1],GPIO.OUT)
+		self.stop()
+	def forward(self):
+		GPIO.output(self.pin[0],GPIO.HIGH)
+		GPIO.output(self.pin[1],GPIO.LOW)
+	def stop(self):
+		GPIO.output(self.pin[0],False)
+		GPIO.output(self.pin[1],False)
+	def back(self):
+		GPIO.output(self.pin[0],False)
+		GPIO.output(self.pin[1],True)于是你就可以简单的使用一下一行代码达到之前六行代码的功能：
+
+
+Wheel('a').forward() #a,b,c,d是四个轮子的名字
+通过调用每个Wheel实例，可以对他们自由操作。由于整个车是由四个轮子协同来工作的，我们需要同时来让四个轮子一起工作，对此对这种协同工作进行封装，让我们不必在关心怎样驱动4个轮子就可以前进了：
+
+
+
+第四部分： 封装车子
+我们希望车子能够前进、后退、左转、右转，于是可以这样来封装一下代码：
+class Car: 
+	wheels=[Wheel('a'),Wheel('b'),Wheel('c'),Wheel('d')] 
+	@staticmethod
+	def init():
+		GPIO.setmode(GPIO.BOARD)
+	@staticmethod
+	def forward():
+		for wheel in Car.wheels:
+			wheel.forward()
+       @staticmethod
+	def back():
+		for wheel in Car.wheels:
+			wheel.back()
+
+
+	@staticmethod
+	def left():
+		Car.wheels[0].forward()	
+		Car.wheels[1].forward()
+		Car.wheels[3].back()
+		Car.wheels[2].back()
+	@staticmethod
+	def right():
+		Car.wheels[2].forward()	
+		Car.wheels[3].forward()
+		Car.wheels[0].back()
+		Car.wheels[1].back()
+	@staticmethod
+	def stop():
+		Car.wheel[0].stop()	
+		Car.wheel[1].stop()	
+		Car.wheel[3].stop()
+		Car.wheel[2].stop()
+
+
+
+Car是一个静态类，它提供的五个方式分别对应到小车的前、后、左、右、停。现在我们考虑远程遥控小车，因此小车必须提供和外部遥控设备的通信接口：
+
+
+第五部分：通信程序
+小车和外界的通信方式其实很多，红外、蓝牙、Wifi等等。根据我的设备清单我就选择了Wifi的方式，所以使用socket作为接口最直接不过了：
+
+rom socket import *
+import sys
+import time
+import car
+
+commands ={'forward':Car.forward,
+  'back':Car.back, 
+  'stop':Car.stop,
+  'left':Car.left,
+  'right':Car.right
+}
+
+def execute(command):	
+	print command
+	commands[command]()
+
+HOST ='192.168.2.101' #the ip of rapberry pi
+PORT = 8888
+s= socket(AF_INET, SOCK_STREAM)
+s.bind((HOST, PORT))
+s.listen(1)
+print ('listening on 8888')
+while 1:
+    conn, addr = s.accept()
+    print ('Connected by:', addr)
+    while 1:
+            command= conn.recv(1024).replace('\n','')
+            if not command:break
+            execute(command)
+    conn.close()
+
+> sudo python server.py 之后，树莓派会监听8888端口一旦有消息传递过来，根据命令参数调用相应的方法。小车的服务端接口就相当一个执行者，接受到命令就立刻执行，此次只要可以建立和小车的socket连接，便可以轻松控制，我们打算用Android手机来发送这个消息：
+
+第六部分： Android手机操作小车
+通过手机来操作，实际上就通过socket和树莓派进行通信，当树莓派处于listening状态，对于手机来说，它要做的最重要的事情就是发送消息到树莓派，一个小车的指挥者：
+
+package com.simplexk;
+import java.io.PrintWriter;
+import java.net.Socket;
+
+public class Commander {
+    public static String HOST ="192.168.2.101"; //the ip of raspberry pi 
+    public static int PORT =8888;
+    public static void send(Command forward) throws Exception {
+            Socket socket = new Socket(HOST, PORT);
+            PrintWriter writer = new PrintWriter(socket.getOutputStream());
+            writer.println(forward.toString());
+            writer.flush();
+            socket.close();
+    }
+}
+ 当然这仅仅是手机向树莓派发送消息的部分，手机发送什么的命令，你还需要编程额外的用户接口程序来完成。最简单的，你可以放上四个按钮来操作小车的四个运动方向。
+
+
+---------------结束---------------
+
+
+
+
+
+                作者：u011459840 发表于2013-8-6 17:05:43 原文链接
+
+
+            阅读：3141 评论：15 查看评论

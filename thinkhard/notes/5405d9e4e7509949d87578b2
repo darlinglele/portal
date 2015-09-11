@@ -1,0 +1,49 @@
+求平方根是一个很常用的数学运算，例如求一元二次方程解。求平方根的方法有很多，其中一个方法叫做牛顿法，牛顿法的基本的思路是根据一个猜测y，通过一定的操作得到一个更好的猜测。对于正实数X的平方根y，(y+x/y)/2是一个更好的猜测。 重复上述的操作，直到得到一个足够好的猜测为止。
+Github.Math.sqrt = function(number) {
+    if (number <= 0)
+        return Number.NaN;
+    var guess = 1;
+    for (var i = 0; i < 5; i++) {
+        guess = (guess + number / guess) / 2;
+    }
+    return guess;
+}
+
+
+这种方法也叫做迭代法求平方法，在第一个迭代中，给定猜测值guess = 1，以此来求出我们认为的更好猜测值 (guess + number / guess) / 2， 再把新的猜测值放到下一轮迭代中去，直到猜测值足够好后，将值返回。
+
+
+在这个算法涉及到两个常数， 
+
+
+初始猜测值迭代次数 
+
+对于迭代的次数，上述的代码中i = 5是个粗略的估计，往往得不到很精确的值，比如16的平方根是4.000000000000004，问题在于我们只是让算法在若干次迭代后停止，而不管猜测是否已经足够好。
+ 因而我们可以增加一些代码来检查这个猜测，如果这个猜测足够好了，程序停止猜测，返回结果。
+
+Github.Math.sqrt2 = function(number) {
+    if (number <= 0)
+        return Number.NaN;
+    var guess = 1;
+    while (!goodEnough(guess, number)) {
+        guess = (guess + number / guess) / 2;
+    }
+    return guess;
+}
+
+function goodEnough(guess, target) {
+    return Math.abs(guess * guess - target) < 0.000000000000001;
+}
+这样就去掉了迭代次数这个常数，但是带来的却是性能的损失，程序需要更多的运算！ 
+
+
+至于更好的初始猜测值，或许是个对于X的变量，或许是某个神奇的常数，接下来去学习。。。
+
+
+
+
+
+                作者：u011459840 发表于2014-1-12 11:40:35 原文链接
+
+
+            阅读：259 评论：0 查看评论

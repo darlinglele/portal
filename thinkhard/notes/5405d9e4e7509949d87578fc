@@ -1,0 +1,99 @@
+其实使用C#这么多年，我时不时会遇到一些令人不爽的设计缺陷。这些缺陷大都是些限制，虽说无伤大雅，也很容易避免，但一旦遇到这些情况，总会令人心生不快，毕竟都是些无谓的限制。而且令人遗憾的是，虽说去除这些限制也不会带来什么问题，但我认为C#设计团队也基本不会去修复这些问题了，毕竟它们大都是些细枝末节。作为一名用C#的纯种码农，我突然一时兴起也要把这些设计缺陷记录下，也方便和大伙一起讨论下。那么这次就先从实现接口内的事件说起，当我们需要显式实现一个接口内的事件时，会发现我们必须提供add和remove访问器，这还会稍许影响到事件常用的使用模式。
+强制add和remove访问器
+这个问题听上去有些绕，不过看代码便一清二楚。例如，在项目中我会定义一个这样的INotifyPropertyChanged接口，其中包含一个PropertyChanged事件：
+public interface INotifyPropertyChanged<TPropertyIdentity>
+{
+    event EventHandler<PropertyChangedEventArgs<TPropertyIdentity>> PropertyChanged;
+}
+
+public class PropertyChangedEventArgs<TPropertyIdentity> : EventArgs
+{
+    public PropertyChangedEventArgs(TPropertyIdentity propertyIdentity)
+    {
+        this.PropertyIdentity = propertyIdentity;
+    }
+
+    public TPropertyIdentity PropertyIdentity { get; private set; }
+}
+可以看出这个接口和.NET内置的INotifyPropertyChanged事件可谓如出一辙，其实他们的目的也一样，就是向外通知该对象的某个属性发生了改变。不同的是，系统内置的PropertyChangedEventArgs对象使用属性名，也就是一个字符串标识一个属性，而在如上带泛型的PropertyChangedEventArgs里，则可以使用任意类型的对象来标识属性，这无疑带来的更多的灵活性。例如，我们可以使用连续的整型数值来标识对象，这样我们就可以使用数组来创建一个索引，它的性能会比使用字符串为键值的字典要高出一些。
+不过，我们实现系统自带的INotifyPropertyChanged属性时，并非是要“自行使用”，而往往是想让通知其他组件，例如ORM框架或是UI控件。因此，它其实已经是.NET平台上的统一约定，即便有所不足，也不能舍弃它。因此，我们往往需要在一个对象上同时实现两种INotifyPropertyChanged接口，例如：
+public class Item : INotifyPropertyChanged<int>, INotifyPropertyChanged
+{
+    public event EventHandler<PropertyChangedEventArgs<int>> PropertyChanged;
+
+    event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged
+    {
+        add { throw new NotImplementedException(); }
+        remove { throw new NotImplementedException(); }
+    }
+}
+以上是Visual Studio为两个事件实现自动生成的代码框架，且看第二个事件，它要求我们提供add和remove访问器。为什么？我不知道，C#开发团队自己可能也已经不太清楚这么规定的原因：
+
+Interesting question. I did some poking around the language notes archive and I discovered that this decision was made on the 13th of October, 1999, but the notes do not give a justification for the decision.
+Off the top of my head I don't see any theoretical or practical reason why we could not have field-like explicitly implemented events. Nor do I see any reason why we particularly need to. This may have to remain one of the mysteries of the unknown.
+
+Eric Lippert是老牌C#团队成员了，经常在Stack Overflow或是博客上写一些C#的设计内幕，可惜在这个问题上连他也认为是个“不解之谜”。此外，“自动属性”让这个限制进一步显得“无厘头”了，因为我们完全可以这么显式实现接口里的属性：
+public interface INameProvider
+{
+    string Name { get; set; }
+}
+
+public class MyNameProvider : INameProvider
+{
+    string INameProvider.Name { get; set; }
+}
+既然如此，事件跟它又有什么本质区别呢？
+相关问题
+顺便一提，我们知道，在C#里不能把显式实现的接口成员标注为抽象成员，这对于事件来说还存在一些额外的问题。且看以下代码片段：
+public abstract class Base : INotifyPropertyChanged<MyIdentity>
+{
+    public EventHandler<PropertyChangedEventArgs<MyIdentity>> PropertyChanged;
+
+    protected void OnPropertyChanged(PropertyChangedEventArgs<MyIdentity> args)
+    {
+        var propertyChanged = this.PropertyChanged;
+        if (propertyChanged != null)
+        {
+            propertyChanged(this, args);
+        }
+    }
+}
+Base是个基类，因此它往往会暴露个OnXyz方法，以便子类触发Xyz事件。在OnPropertyChanged方法中，我们会先判断_propertyChanged是否为null，因为null表示还没有人注册过事件——这是事件使用时的常见模式。事件本身没有注册任何处理器，则意味着事件本身不触发亦可，同样意味着我们甚至可以不去创建事件所需的EventArgs参数。但是，如果我们是要在子类里触发事件（即调用OnXxx方法），则没有办法检查该事件有没有注册处理器。假如这个EventArgs对象创建起来成本较高，就会造成一定的性能损失。
+解决方法倒也简单，例如，在基类里增加一个事件：
+public abstract class Base : INotifyPropertyChanged<MyIdentity>
+{
+    public abstract event EventHandler<PropertyChangedEventArgs<MyIdentity>> MyIdentityPropertyChanged;
+
+    event EventHandler<PropertyChangedEventArgs<MyIdentity>> INotifyPropertyChanged<MyIdentity>.PropertyChanged
+    {
+        add { this.MyIdentityPropertyChanged += value; }
+        remove { this.MyIdentityPropertyChanged -= value; }
+    }
+}
+或干脆加一个“延迟”构造EventArgs的重载：
+public abstract class Base : INotifyPropertyChanged<MyIdentity>
+{
+    private EventHandler<PropertyChangedEventArgs<MyIdentity>> _propertyChanged;
+
+    event EventHandler<PropertyChangedEventArgs<MyIdentity>> INotifyPropertyChanged<MyIdentity>.PropertyChanged
+    {
+        add { this._propertyChanged += value; }
+        remove { this._propertyChanged -= value; }
+    }
+
+    protected void OnPropertyChanged(PropertyChangedEventArgs<MyIdentity> args) { ... }
+
+    protected void OnPropertyChanged(Func<PropertyChangedEventArgs<MyIdentity>> argsFactory) { ... }
+}
+于是在基类里触发事件时即可：
+this.OnPropertyChanged(() => new PropertyChangedEventArgs<MyIdentity>(new MyIdentity()));
+如果您觉得在没有事件处理器的情况下创建一个委托对象也是一种浪费，那么就自己想办法解决咯。没什么困难的，不应该想不出。
+更新
+文章写完后很快就有同学回复，说其实Eric Lippert下方那位同学的回答更靠谱。我看了看又想了想，的确如此。
+事件是个很特别的成员，平时在使用事件的时候，只能将其放在+=或-=的左边，表示为事件添加或移除处理器——除非是在定义事件的类型内部，我们可以将其“赋值”给其他变量，或是当作参数传递，这时候其实操作的就是一个委托对象了。但如果我们是显式声明一个接口内的事件，我们其实是先要将this转化为具体的接口类型才去使用的：
+var propertyChanged = ((INotifyPropertyChanged)this).PropertyChanged;
+但我们把this转化为具体类型之后，我们实际上是在从“外部”访问接口上定义的成员。换句话说，在这种情况下我们并不处于定义事件的对象内部，我们无法获得这个所谓的“委托”对象，因为此时可能根本不存在这么一个委托对象，我们只知道事件的add和remove访问器。那么，我们又如何让其自动实现呢？此时强制提供add和remove访问器就是顺理成章的事情了。
+总体而言，我这系列的第一枪打得有点歪，开了个坏头。当然从好处想，也是通过交流让我，还有潜在不明真相的同学了解到一些细节。还有再次确认了不能迷信权威，这次Eric Lippert的回答的确不够有说服力，但他还是得到了最多的支持，名气这东西的确挺令人嘘唏的。话说我刚才去StackOverflow上对他的回答投了反对票，可能是已经被采纳为正确答案了吧，我反而还被扣了一份，哈哈。
+相关文章
+
+C#的设计缺陷（1）：显式实现接口内的事件

@@ -1,0 +1,49 @@
+众所周知，.NET中Dictionary的键不能为null，否则会抛出NullReferenceException，这在某些时候会显的很麻烦。与此相对的是Java中的HashMap支持以null为键，则方便许多。尽管null的确不是个好东西，但它既然已经存在，既然给我们造成了麻烦，我们就要想办法去解决它。实现一个自己的字典类自然可行，但要精心实现一个高效的字典并不是件容易的事情，例如BCL中的Dictionary.cs就有超过2000行代码。此外另一个容易想到的方法便是实现IDictionary接口，将大部分实现委托给现成的Dictionary类来完成。不过，这相比我在这里要提出的方法还是显得太复杂了。
+在编程语言中引入null其实是件很自然的事情，因为我们都在冯诺依曼机上进行开发，内存的访问方式便是“地址”，于是便有了null或NIL等类似的事物来表示一个指针没有指向任何一块地址，但与之相伴的便是各类错误。毕竟null这玩意儿过于透明，编译器在许多时候没法通过静态分析来检查出问题，所以在一些“非冯模型”的编程语言里都会避免使用null。例如在Haskell中，就使用Maybe这种数据类型来代替null。假如在C#中来模拟Maybe的话，其实就类似于：
+public abstract class Maybe<T> { }
+
+public sealed class Nothing<T> : Maybe<T> {
+    public static Nothing<T> Instance = new Nothing<T>();
+
+    private Nothing() { }
+}
+
+public sealed class Just<T> : Maybe<T> {
+    private readonly T _value;
+
+    public Just(T value) {
+        _value = value;
+    }
+
+    public T Value { get { return _value; } }
+}
+在Maybe类型中没有null，“有值”则是Just，“无值”则是Nothing。而T跟Maybe<T>并不兼容，再获取一个Maybe<T>类型的数据之后，则必须在逻辑分支里对Nothing和Just两种情况进行处理，于是就不会出现NullReferenceException。从理论上说，我们也可以使用这种方式来解决Dictionary中键不能为null的问题，只要用Dictionary<Maybe<TKey>, TValue>来代替Dictionary<TKey, TValue>即可，但实际上这种方式还是有两个缺点：
+
+我们还是可以向字典的键传递null。不过幸运的是，编译器不会把TKey的null当做Maybe<TKey>的null来使用，因此更大的问题在于： 
+除了Nothing以外，我们每次都要创建一个新对象，每个新对象都占用两个额外的字长（即8个或16个字节），这对GC来说会带来压力。 
+
+不过以上两个问题的解决办法也是显而易见的，那就是使用struct来代替class。在C#中有两个常被忽视，但对于性能有莫大关系的能力，一是unsafe代码，二便是可自定义的struct类型。struct不会对GC造成压力，并且不会占用额外的内存，可能唯一的问题便是用作泛型时会生成一份额外的可执行代码，且无法继承了。
+无法继承没有关系，其实我们也不需要严格按照Maybe的数据模型来实现，只要能够解决问题即可。例如，我们可以使用这么一个NullableKey类型：
+public struct NullableKey<T> {
+    private readonly T _value;
+
+    public NullableKey(T value) {
+        _value = value;
+    }
+
+    public T Value {
+        get { return _value; }
+    }
+}
+重载了GetHashCode和Equals方法以后，我们便可以使用NullableKey<T>来代替普通的T作为Dictionary的键。更有意思的是，我们可以为定义Nullable<T>与T之间的隐式转换，这样在很多场合下可以方便我们编写代码，例如：
+var dict = new Dictionary<NullableKey<string>, int>();
+dict[null] = 1;
+
+foreach (string key in dict.Keys) {
+    Console.WriteLine(key ?? "<null>");
+}
+由于Dictionary还支持使用自定义的IEqualityComparer类型，因此我也提供了一个配套的NullableKeyEqualityComparer<T>类，可以用来封装一个自定义的IEqualityComparer<T>，并提供IEqualityComparer<NullableKey<T>>的功能，例如：
+var stringComparer = StringComparer.OrdinalIgnoreCase; // IEqualityComparer<string>
+var keyComparer = new NullableKeyEqualityComparer<string>(stringComparer);
+var dict = new Dictionary<NullableKey<string>, int>(keyComparer);
+NullableKey和NullableKeyEqualityComparer的代码我已经提交至GitHub里的Tmc项目里。所谓Tmc，即缩写之The Missing Collections，我会放一些平时较为常用的，但BCL以及Power Collections或C5等常用第三方类库所没有提供的集合。东西不会多（毕竟已经有BCL和第三方类库了），但总比每次都重写要好。也希望大家也可以帮我审阅代码，尤其要着重检查效率方面的问题。毕竟是通用类库，我希望可以在效率方面也有很好的保证。

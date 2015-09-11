@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load get_extras %}
+{%block main%}
+<!-- 加载编辑器的容器 -->
+    <div class="input-group">
+      <span class="input-group-addon">标题</span>
+      <input type="text" id="new_title" class="form-control" value="{{note.title}}">
+      <span class="input-group-addon">类别</span>
+      <input type="text" id="category" class="form-control" value="{{note.category}}">
+      <span class="input-group-addon">标签</span>
+      <input type="text" id="tags" class="form-control" value="">
+    </div>
+    
+    <div style="display:none;" id='alert_label' class="alert alert-success" role="alert">保存成功</div>
+
+    <div class="input-group">
+        <script id="container" name="content" type="text/plain"></script>                      
+    </div>    
+    <input id="note_content" type="hidden" value="{{note.content}}"/>    
+    <input id="note_id" type="hidden" value="{{note|get:'_id'}}"/>    
+    <div class="btn-group">
+        <button type="button" id="btn_save" class="btn btn-default">保 存</button>              
+    </div>
+    
+{%endblock%}
+
+{%block script%}
+{%endblock%}

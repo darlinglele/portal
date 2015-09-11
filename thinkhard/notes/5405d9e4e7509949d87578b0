@@ -1,0 +1,105 @@
+老子有言：“道生一，一生二，二生三，三生万物！”说来惭愧，我始终未能领会其中奥义。直到最近学习lisp，虽只略知其皮毛，却隐约感到Lisp中蕴藏了高深莫测的思想，惊喜和感慨之余，便在前写下了《Javascript实现Lisp列表(list)及操作》的笔记。但仔细想来这仅仅只是让JavaScript具有像Lisp一样的能力，并没有像Lisp一样去使用这些能力，然而后者才是Lisp真正的奥义所在。
+与老子的名言不同，Lisp的奥义并非深不可测，反而是简单到了极致。斗胆总结一下便是：“道生原子，原子生列表，列表生万物！”。Lisp做到这些只用了三个操作cons、car、cdr。cons操作用两个值来构成一个cons对象，car和cdr则是访问两个值的方法。Lisp的能力很大一部分要归于cons的简单但是强大的数据描述能力。 一个cons对象包含两个值，这个值可以是原子对象，也可以是cons对象本身，cons对象就像是一个可以分裂的细胞，细胞复生细胞，通过不同的组合构成了Lisp程序所需要的数据结构。下面的各种结构各异的结构仅仅是常用的一些数据结构：
+ 
+图一
+
+
+ 
+
+图二
+
+
+
+
+图三
+
+
+用Lisp列表来实现栈操作
+
+实现数据结构栈是个说明Lisp好处的很好例子， 栈的特点是后进先出(last in first out) ,  我们很容易发现它是由栈顶元素和剩下的部分组成，这和列表的特点惊人的相似，如图一中，一个列表有两部分组成分别通过car和cdr，那么我们可以用列表直接来表示栈，car表示栈顶cdr表示剩余部分。对于栈push操作，只需要通过cons来创建一个新列表，即(cons obj stack) 返回新列表，一个cons 相当于一次push操作。如(cons
+ 42 (cons 69 (cons 613 nil))) 相当与 连续把613、69、42 压入空堆栈，构成如图二中的列表。Lisp可以用宏很容易的定义出这两个操作：
+
+(defmacro our-push (obj lst)
+  `(setf ,lst (cons ,obj ,lst)))
+
+(defmacro our-pop (lst)
+	`(let ((x (car ,lst)))
+		(setf ,lst (cdr ,lst))
+		x))
+
+
+
+用JavaScript实现栈
+
+在JavaScript去实现一个栈并无必要，因为Array已经包含了push,pop操做完全满足了需要。 但是本着没有困难也要创造困难的精神，我们才有机会探索JavaScript这么语言充满想象力的语言。在上一篇笔记《Javascript实现Lisp列表(list)及操作》 介绍了Javascript中实现cons、car、cdr的操作， 它们的实现实际上并未依赖任何JavaScript提供的数据结构，而是是通过JavaScript闭包的特性，把数据放在function对象中。
+ 因此可以说，JavaScript中function可以用来表示列表。今天我们将故技重演，让它来为我们表示栈, Stack类的代码如下： 
+
+var Stack = (function() {
+    function Stack() {
+        this.stack;
+    };
+
+    Stack.cons = function(x, y) {
+        return function(lambda) {
+            return lambda(x, y);
+        }
+    }
+
+    Stack.prototype.push = function(obj) {
+        this.stack = Stack.cons(obj, this.stack);
+        return this;
+    }
+
+    Stack.prototype.pop = function() {
+        if (this.stack === undefined) {
+            return undefined;
+        }
+        var top = this.stack(function(x, y) {
+            return x;
+        });
+        this.stack = this.stack(function(x, y) {
+            return y;
+        });
+        return top;
+    }
+    return Stack;
+})();
+
+代码解释：
+如前所诉，我们仍然利用闭包，利用function对象来表示栈， 函数Stack.cons用于返回一个新的栈。像在Lisp中的栈一样，栈就是栈顶和剩余部分的组合，所以栈push操作就是把新元素和旧栈组合返回一个新的栈
+Stack.cons = function(x, y) {
+        return function(lambda) {
+            return lambda(x, y);
+        }
+    }
+Stack.prototype.push = function(obj) {
+        this.stack = Stack.cons(obj, this.stack);
+        return this;
+    }
+
+
+
+我们大可以把Stack.cons函数看成Lisp中的cons，把它返回值function对象看成是lisp中的cons对象，首先它像(cons x y)一样包含了两个参数，其次是function本身可以当成参数作为Stack.cons的参数以构成更复杂的对象。
+有了栈的创建方法，自然还要可以读取栈顶和剩下部分的方法，就像是有了cons操作还有对于的car和cdr一样。pop操作就提供了访问堆栈中的栈顶和剩余部分的方法， 这里有有意思的是，栈被定义成是一个高阶函数，传递一个函数给它，栈就可以返回所包含的数据(x, y)， 如果不这样做将很难取到它隐藏的秘密。
+Stack.prototype.pop = function() {
+        if (this.stack === undefined) {
+            return undefined;
+        }
+        var top = this.stack(function(x, y) {
+            return x;
+        });
+        this.stack = this.stack(function(x, y) {
+            return y;
+        });
+        return top;
+    }
+
+
+总结：在使用JavaScript实现列表操作和刚刚构造的栈的实现中，都是function来描述所需的数据结。这样的function有两个特点： 闭包和高阶函数。 闭包的作用是保存数据，而高阶函数的作用是为了访问数据。
+
+
+
+                作者：u011459840 发表于2014-3-9 16:43:05 原文链接
+
+
+            阅读：466 评论：1 查看评论

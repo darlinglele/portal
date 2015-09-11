@@ -1,0 +1,86 @@
+java.lang.NullPointerException 可以说是最臭名昭著的异常了，但造成它的根源却是来自Null。在Java中Null被用来表示一个不存在或者值为空的对象。理论上在使用任何一个引用的对象前应该 instance == null 的判断，以确保对象存在或者值不为空。实际上程序员常常忘记这样做，于是NullPointerException就经常出现。
+  
+上帝创造了男人，多年之后他老人家后悔了！
+多年以后，Null的发明者Sir Charles Antony Richard Hoare同样发出这样的忏悔，他称这个是造成上亿美元损失的错误！要知道他可不是一个”糟糕“的程序员，除了发明Null，他还发明了快速排序算法。
+当null可以被用来一个不存在的东西时，我们不得不花更多的努力来确保程序不会抛出NullPointerExcepiton，其实常用的方法之一是：
+if(player != null){
+     player.play();
+}
+这是最为常见的一种，但我相信你会和我一样，对这样的代码感到不适和无奈！ 你可能想到用Null Object 模式，该模式意图在于用一个特殊的对象而非Null来表示一个值为空，这个值为空对象和普通对象拥有相同的接口, 因此就可以避免到处去判断是否为空值。但为此付出的代价是我们每个可能为空的类型定义一个为空值时的类型，如：
+
+public interface Animal {
+        public void makeSound();
+}
+ 
+public class Dog implements Animal {
+        public void makeSound() {
+                System.out.println("woof!");
+        }
+}
+ 
+public class NullAnimal implements Animal {
+        public void makeSound() {
+        }
+}
+
+人类一旦为某些事情付出了巨大代价，创新很快会随之而来。
+
+Guava首先使用更有含义的Optional对象来表示一个可能为空值的对象，它的意义在于用这样一个难忘的名字来迫使你处理值为空的情况。
+在Guava中一个Optional对象可以包含一个非空的对象，每一个Optional实例要么包含一个非空的对象，要么什么都不包含，不会出现包含一个空引用的情况。因此一个Optional对象定义了两种类型来分别表示它们： Present和Absent。
+你可以考虑在以下几个方面来使用这种类型来替代Null：
+
+
+函数返回值，作为值为空的另外一中表示，替代简单粗暴的Null，这一点和Null Object模式相同（不同是不需要添加代码）。区分未知和空值，在map中null既可以表示未知的元素，有可能是值为null的元素，为了区别，可以用optional.absent()用来替换值为null的元素。表示集合中的空值，在某些集合不允许存放Null值得时候，可以先用Optional来包装它，然后放入集合。
+根据具体的需要，创建不同的Optional实例：
+
+
+创建一个包含非空对象的Optional： Optional.of(T)创建一个不包含对象的Optional： Optional.absent()从一个可空的对象返回的Optional: Optional.fromNullable(T)
+
+
+每一个实例此时就可以通过实例方法来获得被包装的对象：
+
+
+T get() 返回被包含的对象，如果实例是Absent，则抛出IllegalStateExceptionT or(T) 返回被包含的对象，如果实例是Absent，返回参数指定的对象T orNull() 返回被包含对象，如果实例时Absent，返回Null
+
+
+如果用Optional来表示 player值为空，则代码如下： 
+Optional<Player> violin= Store.find("Violin");
+if(violin.isPrensent()){
+	violin.get().play();
+}
+
+
+这段代码和普通的null判断代码相比，并未更加优雅和简洁。不同的是find的方法返回一个更有意义的类型来引起使用者的注意，避免遗忘处理空值！这也是Optional最为朴实的意义。
+
+如果在player.isPrensent() 为false，我们想要对他做特别处理时,则可以很容易：
+Optional<Player> violin = Store.find("Violin");
+violin.or(gitar).get().play();
+
+
+虽然optional可以用来表示nullable对象，但这并不意味在代码的所有地方都使用Optional，在stackoverflow上 What's
+ the point of Guava's Optional class 有更深入的讨论。
+-------------------------------------------------------Java 8 中的optional --------------------------------------------------
+
+
+说了半天其实刚刚说完Optional是个什么东西，而且仅仅是在Guava中用法。 今天偶然看到Java 8 ea版本中也有是Optional 的实现，看来Java 8除了Lambda这个大明星之外，还是有不少的新东西和想法的。
+Java 8 中的Optional 功能除了提供Guava的功能外，还有一些方法结合了Lambda的新特性。
+例如:
+public void ifPresent(Consumer<? super T> consumer)
+方法首先判断当前实例是否包含对象，如果包含对象，则调用一个consumer方法：
+Optional<Player> violin= Store.find("Violin");
+if(violin.isPrensent()){
+	violin.get().play();
+}
+这一段在Java 8中可以写成Lambda：
+
+Store.find("Violin").ifPrensent((Player player) -> player.play);
+很明显，在代码行数上占了很大优势。
+
+总之，java 8 提供了Optional，虽然不是什么新鲜的创新，至少也算是一个亮点吧。
+
+
+
+                作者：u011459840 发表于2013-9-6 16:38:52 原文链接
+
+
+            阅读：542 评论：2 查看评论

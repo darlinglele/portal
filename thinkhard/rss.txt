@@ -1,0 +1,8 @@
+http://coolshell.cn/feed
+http://www.ruanyifeng.com/blog/atom.xml
+http://rss.aqee.net/
+http://blog.csdn.net/v_july_v/rss/list
+http://blog.csdn.net/maninbehind/rss/list
+http://www.douban.com/feed/review/book
+http://www.matrix67.com/blog/feed
+http://feed.cnblogs.com/blog/u/36931/rss

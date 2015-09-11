@@ -1,0 +1,160 @@
+最近在搞WPF开发，这对我来说是个陌生的领域。话说回来，可能是缺少耐心的缘故，我现在学习新事物的方式主要是“看一些入门文档”，“看一些示例”，然后“猜测”其实现并摸索着使用。在很多时候这种做法问题不大，但一旦有地方猜错了，但在一段时间里似乎和实践还挺吻合的，则一旦遇到问题就会卡死。上周五我就被一个WPF绑定的问题搞得焦头烂额，虽说基本搞定，但还是想验证下是否会有更好的做法，特此记录一下，欢迎大家指正。
+目标与障碍
+简单地说，我想做的事情是编写一个“绑定友好”的用户控件，它可以像Telerik的RadNumericUpDown控件那样使用：
+<telerik:RadNumericUpDown Value="{Binding Path=NumberValue}" />
+
+我们可以通过控件属性的形式直接绑定一个值上去，看上去应该是最基本的要求吧？那么我们就来实现一个类似的控件，他有两个属性，一个是Text字符串属性，另一个是Number整型属性，分别交由一个文本框和一个滑动条来控制。
+<UserControl>
+    <Grid>
+        <StackPanel>
+            <TextBox Text="..." />
+            <Slider Minimum="0" Maximum="100" Value="..." />
+        </StackPanel>  
+    </Grid>
+</UserControl>
+自然，MVVM是不可或缺的，因为在真实环境中一个用户控件的逻辑也会颇为复杂，我们需要对模型和界面进行分离。这个最简单的ViewModel定义如下（自然，实际情况下还需要实现INotifyPropertyChanged接口）：
+public class ValueInputViewModel : INotifyPropertyChanged
+{
+    public string Text { get; set; }
+
+    public int Number { get; set; }
+}
+我之前都是使用DataContext作为ViewModel的容器，例如在BadValueInput.xaml.cs中：
+public partial class BadValueInput : UserControl
+{
+    public BadValueInput()
+    {
+        InitializeComponent();
+
+        this.DataContext = new ValueInputViewModel();
+    }
+
+    ...
+}
+于是便可以在BadValueInput.xaml里绑定：
+<TextBox Text="{Binding Path=Text, UpdateSourceTrigger=PropertyChanged}" />
+<Slider Minimum="0" Maximum="100" Value="{Binding Path=Number}" />
+然后再定义两个依赖属性即可。接着我们在MainWindow.xaml里使用这个类，同样使用MVVM模式：创建MainWindowViewModel类型，包含MyText和MyNumber两个属性，实例化并赋值给MainWindow的DataContext，然后在XAML里绑定至BadValueInput的两个属性上：
+<view:BadValueInput Text="{Binding Path=MyText}" Number="{Binding Path=MyNumber}" />
+从我的设想中，这种做法没有任何问题：父控件（MainWindow）和子控件（BadValueInput）都有自身的DataContext，互不影响。父控件将自己的MyText和MyNumber分别绑定至子控件的Text和Number属性上，也符合直觉，但执行后的结果却并非如此：
+System.Windows.Data Error: 40 : BindingExpression path error: 'MyText' property not found on 'object' ''ValueInputViewModel' (HashCode=6943688)'. BindingExpression:Path=MyText; DataItem='ValueInputViewModel' (HashCode=6943688); target element is 'BadValueInput' (Name=''); target property is 'Text' (type 'String')
+System.Windows.Data Error: 40 : BindingExpression path error: 'MyNumber' property not found on 'object' ''ValueInputViewModel' (HashCode=6943688)'. BindingExpression:Path=MyNumber; DataItem='ValueInputViewModel' (HashCode=6943688); target element is 'BadValueInput' (Name=''); target property is 'Number' (type 'Int32')
+在Output窗口中出现了这样两条错误信息，意思是ValueInputViewModel上没有MyText和MyNumber两个属性。于是我就搞不懂了，为什么定义在MainWindow里的绑定使用的会是BadValueInput的DataContext，而不是当前上下文，即MainWindow的DataContext？我始终觉得这是种违反直觉的逻辑。
+不使用DataContext作为ViewModel容器
+我在微薄上提出这个问题之后收到了不少回应，很多朋友说是使用RelativeSource就可以解决问题，也就是让子控件可以找到父控件的DataContext，甚至说直接在子控件里直接指定父控件ViewModel路径。对于这个做法我不敢苟同，在我看来子控件应该是可以独立地自由使用的一个组件，它不应该根据父控件去调整自己的实现。
+因此，即便这样的做法可以解决这一场景下的问题，但在我看来这完全属于在“凑”结果。我需要的是尽可能完善的解决方案，就像RadNumericUpDown那样干净清爽。我认为程序员还是需要一点完美主义，而不是仅仅为了解决问题而运用Workaround。
+其实解决方案也很简单，@韦恩卑鄙告诉我，假如要避免出现这种情况，应该避免使用DataContext作为ViewModel容器，严格来说这是一种轻度滥用。其实只要遵循这个原则，这个问题也很容易解决。例如，在ValueInput.xaml.cs里定义个ViewModel属性：
+public partial class ValueInput : UserControl
+{
+    public ValueInput()
+        : this(new ValueInputViewModel())
+    { }
+
+    public ValueInput(ValueInputViewModel viewModel)
+    {
+        InitializeComponent();
+
+        this.ViewModel = viewModel;
+    }
+
+    public static readonly DependencyProperty ViewModelProperty =
+        DependencyProperty.Register("ViewModel", typeof(ValueInputViewModel), typeof(ValueInput));
+
+    public ValueInputViewModel ViewModel
+    {
+        get { return (ValueInputViewModel)GetValue(ViewModelProperty); }
+        set { SetValue(ViewModelProperty, value); }
+    }
+}
+然后在ValueInput.xaml里绑定时指定特定的成员：
+<UserControl x:Class="WpfUserControl.Views.ValueInput"
+             x:Name="Self">
+    <Grid>
+        <StackPanel>
+            <TextBox Text="{Binding ViewModel.Text, ElementName=Self, UpdateSourceTrigger=PropertyChanged}" />
+            <Slider Minimum="0" Maximum="100" Value="{Binding ViewModel.Number, ElementName=Self}" />
+        </StackPanel>
+    </Grid>
+</UserControl>
+如今的绑定不光指定Path，还会使用ElementName将Source定义成当前控件对象。不过接下来的问题是，如何将控件的Text和Number属性，与ViewModel中的属性关联起来呢？目前我只知道使用代码来实现这种同步，这需要我们在ValueInput.xaml里添加更多代码：
+public ValueInput(ValueInputViewModel viewModel)
+{
+    InitializeComponent();
+
+    viewModel.PropertyChanged += (_, args) =>
+    {
+        if (args.PropertyName == "Text")
+        {
+            if (!String.Equals(viewModel.Text, this.Text))
+            {
+                this.Text = viewModel.Text;
+            }
+        }
+        else if (args.PropertyName == "Number")
+        {
+            if (!viewModel.Number.Equals(this.Number))
+            {
+                this.Number = viewModel.Number;
+            }
+        }
+    };
+
+    this.ViewModel = viewModel;
+}
+
+public static readonly DependencyProperty TextProperty =
+    DependencyProperty.Register(
+        "Text",
+        typeof(string),
+        typeof(ValueInput),
+        new FrameworkPropertyMetadata(OnTextPropertyChanged) { BindsTwoWayByDefault = true });
+
+private static void OnTextPropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs args)
+{
+    var valueInput = (ValueInput)o;
+    if (!String.Equals(valueInput.ViewModel.Text, valueInput.Text))
+    {
+        valueInput.ViewModel.Text = valueInput.Text;
+    }
+}
+
+public string Text
+{
+    get { return (string)GetValue(TextProperty); }
+    set { SetValue(TextProperty, value); }
+}
+
+public static readonly DependencyProperty NumberProperty =
+    DependencyProperty.Register(
+        "Number",
+        typeof(int),
+        typeof(ValueInput),
+        new FrameworkPropertyMetadata(OnNumberPropertyChanged) { BindsTwoWayByDefault = true });
+
+private static void OnNumberPropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs args)
+{
+    var valueInput = (ValueInput)o;
+    if (!valueInput.ViewModel.Number.Equals(valueInput.Number))
+    {
+        valueInput.ViewModel.Number = valueInput.Number;
+    }
+}
+
+public int Number
+{
+    get { return (int)GetValue(NumberProperty); }
+    set { SetValue(NumberProperty, value); }
+}
+为了将控件上属性的改变同步至ViewModel，我们在定义依赖属性的时候提供propertyChangedCallback参数。同理，为了将ViewModel上属性的改变同步至控件，我们会监听ViewModel对象的PropertyChanged事件，这样的做法虽然麻烦，但的确管用。
+如果我们要在MainWindow里使用这个控件，我们可以继续使用DataContext，此时子控件的DataContext属性会获取到父控件的DataContext对象，这自然不会出现取不到属性的问题。当然，如果父控件本身也希望成为一个独立控件的话，也可以使用同样的做法，即创建自身的ViewModel属性并使用ElementName指定Source，继续避免对DataContext产生依赖。
+示例代码与疑问
+本文的示例代码已存放至GitHub。我周五遇到的这个问题算是这么解决了，但其实我还是有一些疑问，例如：有没有更简单的做法？ValueInput.xaml.cs里用于同步控件属性与ViewModel属性的代码实在太多，也很容易写错。此外，能否在控件上定义一个只读的属性？例如代码中我额外添加的ReadOnlyValue依赖属性：
+public static readonly DependencyProperty ReadOnlyValueProperty =
+    DependencyProperty.Register("ReadOnlyValue", typeof(int), typeof(ValueInput));
+
+public int ReadOnlyValue
+{
+    get { return (int)GetValue(ReadOnlyValueProperty); }
+    private set { SetValue(ReadOnlyValueProperty, value); }
+}
+但是一旦缺少公开的setter，在XAML里就无法绑定这个属性了，即便我把绑定的Mode设为OneWayToSource。初学WPF，疑问很多，希望大家多多帮助。

@@ -1,0 +1,134 @@
+之前的问题是：假如一个struct实现了某个接口，却“显式”实现了其中的成员，那么我们又该如何访问这些成员？其实已经有不少同学抓住了关键，那就是使用泛型，例如有人提出了这样的辅助方法：
+static void Dispose<T>(T obj) where T : IDisposable {
+    obj.Dispose();
+}
+我们没有进行类型转化，只是让运行时可以“认识到”类型T实现了IDisposable接口，这自然可以在不装箱的情况下调用其成员。可惜的是，这种做法的“意识”到位了，却是错误的，原因在于忽视了值类型传参的特点：复制所有内容。换句话说，这个辅助方法内部所使用的obj其实是一个副本，而不是原来的参数对象。假如被调用的成员会修改自身状态——尽管这对于值类型来说是一种极差的设计——这便会产生问题。所以正确的方法应该是这样的：
+static void Dispose<T>(ref T obj) where T : IDisposable {
+    obj.Dispose();
+}
+有了ref关键字修饰obj参数，在传递参数的时候，我们传递的是这个参数的“位置”，因此最终Dispose方法是调用在传入的参数对象上的。此外，我们还可以用.NET 4.0中的AggressiveInlining标注该方法，这样它会被确保内联，一是减少调用开销，二是避免运行时为每个不同的struct类型各自生成一份代码。这个方法的IL代码如下：
+.method private hidebysig static 
+    void Dispose<([mscorlib]System.IDisposable) T> (
+        !!T& obj
+    ) cil managed flag(0100) 
+{
+    // Method begins at RVA 0x266b
+    // Code size 13 (0xd)
+    .maxstack 8
+
+    IL_0000: ldarg.0
+    IL_0001: constrained. !!T
+    IL_0007: callvirt instance void [mscorlib]System.IDisposable::Dispose()
+    IL_000c: ret
+} // end of method Program::Dispose
+根据我们之前的分析，这里的代码意味着不会产生装箱。当然，这还是“不那么能说明情况”，所以还是来看看汇编代码更为直接。首先，准备这么一些简单代码：
+struct DisposableStruct : IDisposable {
+    private readonly int _i, _j;
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public DisposableStruct(int i, int j) {
+        _i = i;
+        _j = j;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public void Dispose() {
+        Console.WriteLine(_i + _j);
+    }
+}
+
+[MethodImpl(MethodImplOptions.AggressiveInlining)]
+static void DisposeRef<T>(ref T obj) where T : IDisposable {
+    obj.Dispose();
+}
+
+[MethodImpl(MethodImplOptions.AggressiveInlining)]
+static void DisposeNoRef<T>(T obj) where T : IDisposable {
+    obj.Dispose();
+}
+
+[MethodImpl(MethodImplOptions.NoInlining)]
+static void Test() {                        // Line 40
+    var ds = new DisposableStruct(1, 2);    // Line 41
+    ds.Dispose();                           // Line 42
+}                                           // Line 43
+
+[MethodImpl(MethodImplOptions.NoInlining)]
+static void TestNoRef() {                   // Line 46
+    var ds = new DisposableStruct(1, 2);    // Line 47
+    DisposeNoRef(ds);                       // Line 48
+}                                           // Line 49
+
+[MethodImpl(MethodImplOptions.NoInlining)]
+static void TestRef() {                     // Line 52
+    var ds = new DisposableStruct(1, 2);    // Line 53
+    DisposeRef(ref ds);                     // Line 54
+}                                           // Line 55
+注意这里我们对于AggressiveInlining与NoInlining的精心标注，包括构造函数，因为这样才能清晰地展现出问题来。先看Test方法的代码（所有地址省去高位的000007fd，下同）：
+Normal JIT generated code
+Program.Test()
+Begin 03670120, size 32
+
+...\Program.cs @ 41:
+03670120    sub     rsp,38h
+03670124    mov     qword ptr [rsp+20h],0
+0367012d    mov     r8d,2
+03670133    mov     edx,1
+03670138    lea     rcx,[rsp+20h]
+0367013d    call    0355c098 (DisposableStruct..ctor(Int32, Int32), ...)
+
+...\Program.cs @ 42:
+03670142    lea     rcx,[rsp+20h]
+03670147    call    0355c0a8 (DisposableStruct.Dispose(), ...)
+0367014c    nop
+0367014d    add     rsp,38h
+03670151    ret
+对比TestNoRef方法：
+Normal JIT generated code
+Program.TestNoRef()
+Begin 03670220, size 45
+
+...\Program.cs @ 47:
+03670220    sub     rsp,38h
+03670224    mov     qword ptr [rsp+28h],0
+0367022d    mov     qword ptr [rsp+20h],0
+03670236    mov     r8d,2
+0367023c    mov     edx,1
+03670241    lea     rcx,[rsp+28h]
+03670246    call    03670170 (DisposableStruct..ctor(Int32, Int32), ...)
+
+...\Program.cs @ 48:
+0367024b    mov     r11,qword ptr [rsp+28h]
+03670250    mov     qword ptr [rsp+20h],r11
+03670255    lea     rcx,[rsp+20h]
+0367025a    call    03670190 (DisposableStruct.Dispose(), ...)
+0367025f    nop
+03670260    add     rsp,38h
+03670264    ret
+可以清晰的看到，DisposableStruct对象分配在[rsp+28h]上，但在调用Dispose方法前复制了一份到[rsp+20h]（DisposableStruct恰好8字节），把它作为Dispose方法的参数。前两个方法很容易明白，但TestRef则显得“奇怪”了一些：
+Normal JIT generated code
+Program.TestRef()
+Begin 036701c0, size 48
+
+...\Program.cs @ 53:
+036701c0    push    rbx
+036701c1    sub     rsp,30h
+036701c5    mov     qword ptr [rsp+28h],0
+036701ce    lea     rbx,[rsp+28h]
+036701d3    mov     qword ptr [rsp+20h],0
+036701dc    mov     r8d,2
+036701e2    mov     edx,1
+036701e7    lea     rcx,[rsp+20h]
+036701ec    call    03670170 (DisposableStruct..ctor(Int32, Int32), ...)
+
+...\Program.cs @ 54
+036701f1    mov     rax,qword ptr [rsp+20h]
+036701f6    mov     qword ptr [rbx],rax
+036701f9    mov     rcx,rbx
+036701fc    call    03670190 (DisposableStruct.Dispose(), ...)
+03670201    nop
+03670202    add     rsp,30h
+03670206    pop     rbx
+03670207    ret
+其实我挺没有想到TestRef的方法需要这么多指令，最理想的情况其实应该和Test方法一模一样，不是么？这里虽然没有装箱，也没有复制对象，但是做的事情太多了，居然还在栈上保留rbx，要知道这可是64位机。当然，我想这也是因为我们强制禁止了JIT内联DisposableStruct构造函数的缘故吧，感兴趣的朋友可以再自行尝试一下。
+毕竟，我们现在只是想确认这里不会产生装箱。

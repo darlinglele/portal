@@ -1,0 +1,42 @@
+最近用到python写代码，发现一个python确实是个比较有趣的语言，其中的之一就是容易误认为是关键字的self。然而self在python并非关键字，只是一个有点“特殊“”的参数名称，它出现在某些函数的参数列表里，而且第一个参数，例如：
+
+class Student:
+	i = 1234
+	def __init__(self, id, name):
+		self.id = id
+		self.name = name
+	def greet(self, name)
+		print 'my name is ' + name  
+student = Student(100, 'lin')
+student.greet('Linzhixiong') 
+Student.greet(student, 'linzhixiong')
+
+
+
+上面的每一个函数定义都有个self，在调用时却没有出现在参数列表，python这个时候应该扔出一个异常，但事实上程序能够正常运行。 为了了解这个有趣的现象，我们有必要先解一下python的面向对象的一些知识。
+
+函数对象：
+是python最核心的对象，函数对象是一段代码，通过名字进行调用，调用时需要传递数据给它。当它和实例对象一起被封装成一个方法时，还可以访问实例内部的数据。Student.greet就是函数对象
+类对象：
+Student是一个First class object， 也叫类对象，class是运行时动态的定义这个类对象的关键字。这个类对象除了可以引用属性，还可以实例化。类对象可引用的属性包括数据和函数对象。Student.i , Student.__init__, Student.greet都是有效的引用，可以通过赋值来修改它们，因此类可以在任何时刻进行修改。 除此之外，类对象可以用来实例化对象，式如 student = Student()， 把类对象Student 当做一个无参数的函数来调用，返回一个新的实例对象。
+
+
+实例对象：
+把类对象当成一个无参数函数来调用可以创建新实例对象，然而更多的情况在实例化时希望通过参数进行实例化，__init__就是个特殊函数，它很类似其他语言中的构造函数。如果类定义了__init__，新创建的类实例调能够调用该方法。注意到__init__函数的定义了第一个参数self，但是在调用实例方法时并未显示传递self参数，程序却按照预期的那样正常运行， 真是好神奇！这些神奇就全靠方法对象。
+
+
+
+方法对象：
+一个方法对象是一个实例对象和函数对象的封装，方法对象的封装就像引用属性一样简单，如当student引用greet属性student.greet时，会搜索Student类对象中名为greet的属性，如果greet是一个函数对象，就将student对象和greet函数对象成方法对象。方法对象被调用时，它内部重新构造了参数列表，去调用函数对象。 如方法对象调用student.greet('linzhixiong')， 参数列表只有一个参数，方法对象会把实例对象作为第一个参数放到重新构造的参数列表中，再有这个新的参数列表调用函数对象，Student.greet(
+ student, 'linzhixiong')。这也是为什么类定义时，函数要加上一个self参数，这个参数就是由方法对象绑定的实例对象。 
+
+
+这种使用self参数显示的引用，而不用像JavaScript 的关键字this 来引用对象的方法，使得函数对象保持了一致性。 但因此我们也不得不在所有需要引用自身对象的函数里，显示的定义self参数。
+
+
+参考：http://www.pythondoc.com/pythontutorial3/classes.html
+
+                作者：u011459840 发表于2014-5-4 10:37:18 原文链接
+
+
+            阅读：75 评论：0 查看评论

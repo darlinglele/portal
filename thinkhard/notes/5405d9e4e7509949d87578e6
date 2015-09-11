@@ -1,0 +1,58 @@
+Tmc的初衷是补充一些常用的数据结构，例如对null作为字典键的支持，以及带有一个额外Remove方法的HashDictionary。但是，其实我创建Tmc项目的“初衷”却是HashedLinkedList。.NET BCL中已经有一个LinkedList，这是一个双向链表。说起来，我之前在面试中经常会提出一系列数据结构的基础问题，其中便包含LinkedList，我会问各个操作的时间复杂度，以及如何改进它们。例如，如何将它的Remove操作优化成O(1)的时间复杂度？最容易想到的做法便是使用一个字典来记录元素到特定LinkedListNode的映射关系。这种模式实在过于常见，所以便有了个特别的名称，叫做HashedLinkedList。
+好吧，其实在C5中已经有了一个HashedLinkedList类，但是有重大缺陷，例如没有暴露出LinkedListNode这个类型。我们来看下.NET BCL中LinkedList的一些方法：
+public class LinkedListNode<T>
+{
+    public LinkedList<T> List { get; }
+    public LinkedListNode<T> Next { get; }
+    public LinkedListNode<T> Previous { get; }
+    public T Value { get; set; }
+}
+
+public class LinkedList<T>
+{
+    public LinkedListNode<T> AddFirst(T value);
+    public LinkedListNode<T> AddLast(T value);
+    public LinkedListNode<T> AddBefore(LinkedListNode<T> node, T value);
+    public LinkedListNode<T> AddAfter(LinkedListNode<T> node, T value);
+    // ...
+}
+.NET BCL的LinkedList会暴露出配套的LinkedListNode，这样我们便可以保留LinkedListNode对象，并执行O(1)实现复杂度的快速插入。此外，我们还可以根据LinkedListNode的Next和Previous进行前后遍历，这才是真正的“链表”。之前有人问我，为什么LinkedList不实现IList接口呢？我的看法就是LinkedList和List在表现上的区别实在太大，而IList的含义是后者，因此就放过LinkedList了。
+其实，完全从外部实现一个HashedLinkedList（的部分功能）也不难，我们只要封装一个LinkedList和一个Dictionary即可。例如：
+public class HashedLinkedList<T> {
+    private readonly LinkedList<T> _list = new LinkedList<T>();
+    private readonly Dictionary<T, LinkedListNode<T>> _nodes = new Dictionary<T, LinkedListNode<T>>();
+
+    public LinkedListNode<T> AddLast(T value) {
+        var node = _list.AddLast(value);
+        _nodes.Add(value, node);
+
+        return node;
+    } 
+
+    public void Remove(T value) {
+        var node = _nodes[value];
+        _nodes.Remove(value);
+        _list.Remove(node);
+    }
+}
+当然，这种“粗制滥造”的HashedLinkedList类完全不能作为通用的数据结构来使用，但假如是普通项目需要，这么做往往也够了。而且事实上一个“通用”的HashLinkedList的确也会遇到很多决策问题，例如：是否支持相同元素？我们知道.NET BCL中的LinkedList是支持相同元素的（事实上LinkedListNode的Value属性可读可写），但显然上面这个粗糙的HashedLinkedList便不支持。
+有人可能会说，支持相同元素很容易呀，只要用Dictionary<T, List<LinkedListNode>>或类似的结构，将一个值映射到多个LinkedListNode就行了。这可能会解决一部分问题，但事情远没有那么简单。例如.NET BCL的LinkedList还有Find(T value)和FindLast(T value)这两个方法，分别用来找出“第一个”和“最后一个”与value相等的LinkedListNode。没错，LinkedList是有顺序的，假如我们要保留Find和FindLast的语义不变，就没法提供O(1)的时间复杂度的实现——不信你试试看？
+假如我们还是用遍历的方法来实现Find和FindLast，这便失去了HashedLinkedList的意义。但是反过来说，在很多时候，我们可以确定不需要其支持相同元素，或者无所谓Find得到的是其中的哪个节点呐。我估计这也是.NET BCL中不提供HashedLinkedList的缘故吧，既然没法“通用”，那么就由开发人员自己根据需要来组合吧。
+目前在Tmc中的HashedLinkedList便不支持保存相同元素，它只是将.NET BCL的LinkedList几乎原封不动地复制过来，然后增加一些简单的功能。.NET BCL的LinkedList的实现为“双向循环链表”，不同于某些数据结构书上使用head和tail来保存首尾节点，“双向循环列表”只需要记录头节点，而尾节点只需要简单的访问“头节点”的“前一个节点”即可：
+private LinkedListNode<T> _head;
+
+public LinkedListNode<T> Last
+{
+    get { return _head == null ? null : _head._prev; }
+}
+使用“双向循环列表”的好处在于实现特别简单，各种修改操作都能统一为三个方法：
+private void InsertNodeBefore(LinkedListNode<T> node, LinkedListNode<T> newNode);
+private void InsertNodeToEmptyList(LinkedListNode<T> newNode);
+private void RemoveNode(LinkedListNode<T> node);
+因此，在此基础上实现的HashedLinkedList也只需要修改这三个方法即可，几乎是瞬间的事情。当然，假如只是这样的HashedLinkedList，我将其放入Tmc项目的意义也不大。因此，不久的将来我会删除这个类，并提供额外的数据结构来应对不同的需求：
+
+不支持相同元素。 
+支持相同元素，但不保证顺序，效率比前者略低。 
+支持相同元素，并保证顺序，效率比前两者低，但肯定要高于.NET BCL中自带的LinkedList。 
+
+这种数据结构（亦或是三种？），我就称之为IndexedLinkedList吧。假如是你，你会怎么做呢？

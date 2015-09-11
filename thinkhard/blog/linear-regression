@@ -1,0 +1,131 @@
+
+            <p>
+                在统计学中，线性回归是利用线性回归方程对一个或多个自变量和因变量之间关系进行建模的一种回归分析。这种函数一个或多个回归系数的线性组合。
+            </p>
+
+            <p>
+                线性回归有很多实际用途，其中之一就是用来做预测，线性回归根据观测数据集进行建模，得到一个拟合线性方程，对于新的一个或多个自变量X，预测其y的值。
+                本文希望通过一个案例来学习线程回归在机器学习领域的应用。
+            </p>
+            <h4>案例：房产总价评估</h4>
+
+            <p>买房是件人生大事，房子价格是我们最关心的，而影响房子价格的参数包括：面积(平方米)、房间数(间)、交通情况(便利1~5不便利)等等。现在已知某房子这些数据(88,3,2)，请大概估计其价格？</p>
+
+            <p>
+                当然在做估计之前，可以参考的一些同时期同地区的房价数据：
+
+            </p>
+
+            <p>
+                于是我们尝试按照机器学习算法的三个基本步骤来解决以上的问题：
+            <li>假设模型</li>
+            <p>线性回归适合作为该案例的模型：y=f(x), x表示特征向量，本例即房子的3个特征构成的特征向量(面积，房间数，交通状况)，因此我们假设了打分模型：
+            </p>
+
+            <p>
+                <img src="http://chart.googleapis.com/chart?cht=tx&chl=h_%7B%5Comega%20%7D(x)%20%3D%20%5Comega%20_%7B0%7D%20%2B%5Comega%20_%7B1%7Dx_%7B1%7D%2B%5Comega%20_%7B2%7Dx_%7B2%7D%2B%5Comega%20_%7B3%7Dx_%7B3%7D"
+                     style="border:none;"/>
+                <br>其中ω向量 (ω0, ω1, ω2, ω3)，也就是线性方程的回归系数，它们所有代表的实际意义是各个特征对结果(总价格)产生的影响力。
+            </p>
+
+            <li>假设评估</li>
+            <p>
+                在上面我们已经给出了一个假设模型hω(x)，若x具有n个特征,那么ω就是欧几里得空间<img
+                    src="http://chart.googleapis.com/chart?cht=tx&chl=R%5E%7Bn%2B1%7D" style="border:none;"/>的一个向量。一个向量代表了就是一个线性回归系数，
+                判断一个假设hω(x)好坏的方法是：hω(x)值和每个观测数据的差方(损失函数)：
+
+                <img src="http://chart.googleapis.com/chart?cht=tx&chl=(h_%7B%5Comega%20%7D(x)%20-%20y)%5E%7B2%7D"
+                     style="border:none;"/>
+                。若有m个观测数据则将所有的差方的平均值：
+
+                <img src="http://chart.googleapis.com/chart?cht=tx&chl=J(%5Comega%20)%3D%5Cfrac%7B1%7D%7B2m%7D%5Csum_%7Bi%3D1%7D%5Em%20(h_%7B%5Comega%20%7D(x%5E%7Bi%7D)-y%5E%7Bi%7D)%5E%7B2%7D"
+                     style="border:none;"/>
+                ，J(ω) 是值越小，说明线性方程和观测数据越拟合，它对结果的预测就越准确。为了更直观的理解这一点，我们在平面里用图形来表示拟合的直观意义。
+            </p>
+
+            <div style=" text-align:center">
+                <div style="">
+                    <button onclick="LeastSquare.clear();">重设数据</button>
+                    <button onclick="LeastSquare.calculate();">计算</button>
+                </div>
+                <canvas id="leastsquare" width="600" height="200" style="cursor:crosshair; display: inline-block;">
+                    Your browser does not support the canvas element.
+                </canvas>
+                <script type="text/javascript" src="/static/javascript/Coordinate.js"></script>
+                <script type="text/javascript" src="/static/javascript/leastsquare.js"></script>
+            </div>
+            <p>
+                红色的每一个点代表一个观测数据(x,y),自变量x对应到坐标横轴，因变量y对应到竖轴,对应的假设函数为：
+                <img src="http://chart.googleapis.com/chart?cht=tx&chl=h_%7B%5Comega%20%7D(x)%20%3D%20%5Comega%20_%7B0%7D%20%2B%5Comega%20_%7B1%7Dx_%7B1%7D"
+                     style="border:none;"/> 同直线方程：y=ax + b;
+                在x的维度n=1的情况下，hω(x)函数对应到几何空间<img
+                    src="http://chart.googleapis.com/chart?cht=tx&chl=R%5E%7Bn%2B1%7D" style="border:none;"/>即二维平面空间内的一条直线。一条最拟合的直线hω(x)应该尽可能靠近所有的数据，
+                使差方J(w)才能尽可能的小，线性方程的预测能力也就更好，这个假设函数hω(x)，更确切的说这个ω就是我们想要寻找的。
+            </p>
+
+            <p>
+
+            <li>求解方法</li>
+            <p>
+                当我们建立了适当的假设模型，而且有了评估假设函数的具体方法，现在我们只需要找到一个ω使得J(ω)在ω的假设空间取得最小值，那么问题变成了求函数J(ω)的极小值问题。
+                由于ω的假设空间是无限大的，那么对每个可能的值进行遍历比较是不可能的，为了求使得J(ω)最小的哪个ω，有两种比较常用的方法，梯度下降和最小二乘法。我们的例子使用随机梯度下降法来求解。
+            </p>
+            <h4>最速梯度下降法</h4>
+            <img src="/static/images/gradientdescent.png">
+
+            <li>批量梯度下降</li>
+            <p>
+                将J(ω)对ω求编导，得到每个ω对应的梯度：
+
+                <img src="http://chart.googleapis.com/chart?cht=tx&chl=%5Cfrac%7B%5Cpart%20J(w)%7D%7B%5Cpart%20w_%7Bj%7D%7D%20%3D%20%20%5Cfrac%7B1%7D%7Bm%7D%5Csum_%7Bi%3D1%7D%5En%20(y%5Ei%20-h_%7Bw%7D(x%5Ei))x%5Ei_j"
+                     style="border:none;"/>
+            </p>
+
+            <p>
+                因为J(ω)在ω点沿着梯度相反的方向下降最快，因此变量ω更新公式为：
+
+                <img src="http://chart.googleapis.com/chart?cht=tx&chl=w%5E'_%7Bj%7D%20%3Dw_%7Bj%7D%20-%20%5Cfrac%7B1%7D%7Bm%7D%20%5Csum_%7Bi%3D1%7D%5Em%20(y%5Ei%20-%20h_%7Bw%7D(x%5Ei))%20x%5Ei_%7Bj%7D"
+                     style="border:none;"/>
+
+            </p>
+            <li>随机梯度下降</li>
+            <div>
+                随机梯度下降和批量唯一不同的是，批量直接对整体评估函数J(ω)求偏导，而随机梯度下降对一个样本损失函数：
+                <img src="http://chart.googleapis.com/chart?cht=tx&chl=(h_%7B%5Comega%20%7D(x)%20-%20y)%5E%7B2%7D"
+                     style="border:none;"/>求偏导，变量ω更新公式为：<img
+                    src="http://chart.googleapis.com/chart?cht=tx&chl=w%5E'_%7Bj%7D%20%3Dw_%7Bj%7D%20-%20(y%5Ei%20-%20h_%7Bw%7D(x%5Ei))%20x%5Ei_%7Bj%7D"
+                    style="border:none;"/>
+            </div>
+
+            <h4>算法实现</h4>
+
+            <div>
+                下面的Canvas中蓝色曲线呈现了评估函数J(w)随着w更新而收敛的过程。一开始评估函数J(w)的值很大，浅灰色直线代表的hw(x)和观测数据拟合的明显很差，数据点到直线的距离很远，但可以看到每一次w更新，
+                都使hw(x)朝着数据点靠近，同时J(w)随之下降。
+            </div>
+
+            <div style=" text-align:center">
+
+                <canvas id="gradientdescent" width="600" height="200" style="cursor:crosshair; display: inline-block;">
+                    Your browser does not support the canvas element.
+                </canvas>
+                <script type="text/javascript" src="/static/javascript/gradientdescent.js"></script>
+            </div>
+            <p>
+            主要代码片段如下:
+            <pre class="prettyprint">
+var descent = function() {
+	for (var i = 0; i < MAX; i++) {
+		var y = features[i % M].y;
+		var x = features[i % M].x;
+		var lastTheta = Float64Array.copy(theta);
+		for (var j = 0; j < J; j++) {
+			var guess = H(lastTheta, features[i % M]);
+			theta[j] = theta[j] - alpha * (guess - y) * x[j];
+		};
+	}
+}
+            </pre>
+            </p>
+        </div>
+    </div>

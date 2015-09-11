@@ -1,0 +1,31 @@
+{% load staticfiles %}
+{% load get_extras %}
+
+<div class="article"> 
+    <div>                  
+    {% if doc.star and doc.star == 1 %}
+      <button id='star' type="button" class="btn btn-default" data-complete-text="收藏" data-toggle="button">取消收藏</button>  
+    {% else %}
+        <button id='star' type="button" class="btn btn-default" data-complete-text="取消收藏" data-toggle="button">收藏</button>  
+    {% endif %}    
+        <div class="title">
+            <h3><a href="{{doc.link}}">{{doc.title}}</a></h3>
+            <span>{{doc.published}} {{doc.author}}</span>
+        </div>                                    
+     </div>   
+    <div class="text">           
+        {% autoescape off %}{{doc.content}}{% endautoescape %}
+    </div>
+</div>
+<script>    
+            $('#star').bind('click',function(){
+              id = $('.item-selected')[0].id;
+              $(this).button('loading');
+              $.ajax({
+                  url: "/star/"+ id,
+                  context: document.body
+                }).done(function(data) {  
+                    $("#star").button('complete');
+                });     
+            })
+</script>

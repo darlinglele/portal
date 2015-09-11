@@ -1,0 +1,13 @@
+DEBUG:jieba:Building Trie..., from /Users/zhixiong/百度云同步盘/thinkhard/thinkhard/jieba/dict.txt
+DEBUG:jieba:loading model from cache /var/folders/ny/qgtkzz5117b5fr59376sz1mw0000gn/T/jieba.cache
+DEBUG:jieba:loading model cost 2.39547395706 seconds.
+DEBUG:jieba:Trie has been built succesfully.
+DEBUG:jieba:Building Trie..., from /Users/zhixiong/百度云同步盘/thinkhard/thinkhard/jieba/dict.txt
+DEBUG:jieba:loading model from cache /var/folders/ny/qgtkzz5117b5fr59376sz1mw0000gn/T/jieba.cache
+DEBUG:jieba:loading model cost 2.38791584969 seconds.
+DEBUG:jieba:Trie has been built succesfully.
+DEBUG:jieba:Building Trie..., from /Users/zhixiong/百度云同步盘/thinkhard/thinkhard/jieba/dict.txt
+DEBUG:jieba:loading model from cache /var/folders/ny/qgtkzz5117b5fr59376sz1mw0000gn/T/jieba.cache
+DEBUG:jieba:loading model cost 2.41747498512 seconds.
+DEBUG:jieba:Trie has been built succesfully.
+DEBUG:jieba:Building Trie..., from /home/ubuntu/think/thinkhard/jieba/dict.txt

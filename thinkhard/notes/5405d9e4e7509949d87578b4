@@ -1,0 +1,102 @@
+像Java、c++那样的强类型语言，类型是一切对象的模板，通过类型定义，可以描述（封装）数据和操作。根据需求，类型可以扩展继承、多态变化，使得代码的重用性和可读性相比过程化编程语法大大提高。 Javascript也是一门面向对象的语言，在没有类型定义的情况，通过定义原型来实现类型模板。
+Javascript引用类型：Javascript本身提供了几种不同的用类型: Function, Object, Boolean, Number, String, Array
+其中Function 这个类型最为特殊，必须拿出来单独的说一下，首先必须知道Javascript的所谓的类型不是用class来表示，而是用function来表示，这个类型信息本身就是一个对象。如果按照Java中类型及对象的定义来理解十分不容易，
+例如Javascript 定义一个类型为Function的对象如下：
+
+function Cat(){
+      return 1;
+};
+这段代码中Cat扮演两个角色，一个是自定义类型Cat，一个是对象Cat；Cat的类型是Function, 同时Cat又是引用类型Function的一个实例。
+作为自定义类型，Cat就可以作为对象的模板，也就是构造函数，实际上Javascript也只能通过定义Function类型创建其他对象的模板，相当于Java中的Class， Object 这个（Function）类型，就相当于Java中的Object类 。例如： new Object(); new Function(); new Array();  所以，Function, Number, Array 这些类型都可以看做是Object（Function）的子类,
+ 除了这些内置引用类型，还可以通过关键字function/Function定义类型, 上面的代码是一种定义Function Cat类型和实例的方式，也同样通过调用特殊的模板函数Function来创建一个类型为Function的实例：
+var Cat = new Function("return 1;");
+
+在使用上，Cat不同的身份也分别有不同的用法，作为类型模板，它可以充当构造函数来创建实例，例如： var cat = new Cat(); 当然实例实际上没有任何自己的属性，全部继承了Object 实例;
+创建Object实例的方法： var o = new Object();  var o  = {}; 
+创建Function实例的方法: var f = new Function("return 1");  var f =function(){return 1;}
+Object.constructor ==  Function, Object的构造函数是实际上还是Function方法 
+就是说所有的实例都是通过构造函数Function创建出来的。
+
+
+先来简单粗暴的创建一个实例：
+  var cat = {name:  'xiaoqi', age: 1};
+通过cat.constructor属性或者cat instanceof Object，cat是Object函数构造出来的一个实例，cat的所有属性都继承子Obeject函数, 除了name和age。
+上面的代码也可以替换成：
+
+var cat  =new Object();
+cat.name = 'xiaoqi';
+cat.age ='1';
+
+
+Object 函数是一切对象的原始模板
+如果熟悉Java和C++的开发人员，要理解Object函数是一切对象的模板，就要改变既有的观念。在Javascript中函数即是一般意义的函数，同时 一个货真价实的对象。因此，除了包含函数体内的代码，作为一个对象它还可以拥有其他的属性。除此之外它还有一种特别的能力，那就是作为构造函数来创建新对象。
+
+function Cat(name, age){
+   this.name = name;
+   this.age = age;
+}																																      Cat("xiaoqi",1);
+当函数Cat作为一般的函数来调用时，它确实如它自己所描述那样，改变了this所指对象的两个属性而已。 同时函数Cat也是一个对象，用于一些基本的属性例如:call,apply,prototype等等一些从Object继承过来的重要属性，除此之外还可以增加、删除和修改它的属性。因此上面的代码也替换为：
+Cat.call(this,["xiaoqi", 1]);
+到目前为止，Cat函数已经身兼数职了，即是函数又是对象的，然后它的能力还不止这些：
+特殊的函数--构造函数
+所谓的特殊函数，完全是唬人的说法。Cat函数本身就是一个构造函数，它的写法和一般的函数并无二致，差别在于我们如何调用它：
+
+function Cat(name, age){
+   this.name = name;
+   this.age = age;
+}
+
+var cat = new Cat("xiaoqi", 1);
+
+熟悉Java的肯定对最后一行new 关键字非常熟悉，但是这里却没有对应class Cat的定义哦， 看来所有的奥妙全都在这个Cat函数里。 我们知道了Javascript有原型模板，也知道一切对象的模板是Object对象，而且Cat函数会自动继承Object，那么这个构造函数就可以以Object为模板来创建一个新的对象。此时，this就不再是指向调用的函数，而是指向新创建的对象。因此，我们可以在构造函数定义更多的属性给Cat：
+
+function Cat(name, age){
+   this.name = name;
+   this.age = age;
+   this.play =function(){
+   }
+}
+
+var xiaoqi = new Cat("xiaoqi",1);
+var daqi = new Cat("daqi",2);
+xiaoqi.play(); 
+daqi.play();
+
+因此用function来表示一个类型的写法，如果不考虑访问级别的话,甚至比Java这种需要多写一行class更为简洁明了， 当然Javascript并不想要变成Java的样子，也无法替代Java。接下来我们继续讨论面向对象的另一个重要特性，继承。
+通过prototype属性来实现继承
+假如已有一个构造函数：
+
+function Animal(){
+	this.run= function(){
+	}
+}
+那么我们在创建一下具体的Animal类型时，例如Cat，就希望能够通过继承的方式run来添加这Animal中的。Javascript是通过prototype属性来实现：
+
+function Cat(name, age){
+   this.name = name;
+   this.age = age;
+}
+
+Cat.prototype = new Animal();
+Cat.prototype.constructor = Cat;
+var cat =new Cat("xiaoqi",1);
+cat.play();
+实际上，要理解为什么Cat.prototype 可以实现继承，还要先看看在调用Cat.prototype = new Animal(); 时，到底发生了什么？
+先看一个简单的构造函数：
+
+function Simple(){
+}
+//这段代码相当于：
+var Simple = new Function("//body");首先Simple是类型Function的一个实例，Simple默认就继承了Function.prototype中的所有属性，说明使用new调用构造函数时，不仅调用函数体来初始化，而且把Function.prototype所指对象拷贝到新的实例。 
+
+Simple是一个构造函数，因此可以继续构造基于Simple的实例：
+var simple = new Simple();
+simple是一个Simple的实例，在Simple构造函数体内并未有任何初始化代码，所有simple的所有属性都来自于Simple.prototype.  而Simple.prototype是默认从Object.prototype过来的。 也就是任何一个Function实例的prototype属性都来自于Object.prototype。
+总结一下就是：任何一个构造函数在通过new调用时，除了函数体内的初始化代码外，同时也把prototype上所指的对象拷贝到新实例。如果新实例是一个Function实例，那么它将默认从Object中继承prototype属性。
+
+
+
+                作者：u011459840 发表于2013-12-13 23:08:47 原文链接
+
+
+            阅读：315 评论：0 查看评论

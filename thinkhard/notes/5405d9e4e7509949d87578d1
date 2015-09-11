@@ -1,0 +1,466 @@
+        第一篇：从决策树学习谈到贝叶斯分类算法、EM、HMM                      （Machine Learning & Data Mining交流群：8986884）引言    最近在面试中，除了基础 &  算法 & 项目之外，经常被问到或被要求介绍和描述下自己所知道的几种分类或聚类算法(当然，这完全不代表你将来的面试中会遇到此类问题，只是因为我的简历上写了句：熟悉常见的聚类 & 分类算法而已)，而我向来恨对一个东西只知其皮毛而不得深入，故写一个有关数据挖掘十大算法的系列文章以作为自己备试之用，甚至以备将来常常回顾思考。行文杂乱，但侥幸若能对读者起到一点帮助，则幸甚至哉。    本文借鉴和参考了两本书，一本是Tom M.Mitchhell所著的机器学习，一本是数据挖掘导论，这两本书皆分别是机器学习 & 数据挖掘领域的开山 or 杠鼎之作，读者有继续深入下去的兴趣的话，不妨在阅读本文之后，课后细细研读这两本书。除此之外，还参考了网上不少牛人的作品(文末已注明参考文献或链接)，在此，皆一一表示感谢(从本质上来讲，本文更像是一篇读书 & 备忘笔记)。    本系列暂称之为Top 10 Algorithms in Data Mining，其中，各篇分别有以下具体内容：开篇：即本文 从决策树学习谈到贝叶斯分类算法、EM、HMM；第二篇：支持向量机通俗导论（理解SVM的三层境界）；第三篇：从K近邻算法、距离度量谈到KD树、SIFT+BBF算法；第四篇：神经网络 待写...    说白了，一年多以前，我在本blog内写过一篇文章，叫做：数据挖掘领域十大经典算法初探(题外话：最初有个出版社的朋友便是因此文找到的我，尽管现在看来，我离出书日期仍是遥遥无期)。现在，我抽取其中几个最值得一写的几个算法每一个都写一遍，以期对其有个大致通透的了解。    OK，全系列任何一篇文章若有任何错误，漏洞，或不妥之处，还请读者们一定要随时不吝赐教 & 指正，谢谢各位。分类与聚类，监督学习与无监督学习    在讲具体的分类和聚类算法之前，有必要讲一下什么是分类，什么是聚类，以及都包含哪些具体算法或问题。Classification (分类)，对于一个 classifier ，通常需要你告诉它“这个东西被分为某某类”这样一些例子，理想情况下，一个 classifier 会从它得到的训练集中进行“学习”，从而具备对未知数据进行分类的能力，这种提供训练数据的过程通常叫做 supervised learning (监督学习)，而Clustering(聚类)，简单地说就是把相似的东西分到一组，聚类的时候，我们并不关心某一类是什么，我们需要实现的目标只是把相似的东西聚到一起，因此，一个聚类算法通常只需要知道如何计算相似 度就可以开始工作了，因此 clustering 通常并不需要使用训练数据进行学习，这在 Machine Learning 中被称作 unsupervised learning (无监督学习).  常见的分类与聚类算法    所谓分类分类，简单来说，就是根据文本的特征或属性，划分到已有的类别中。如在自然语言处理NLP中，我们经常提到的文本分类便就是一个分类问题，一般的模式分类方法都可用于文本分类研究。常用的分类算法包括：决策树分类法，朴素的贝叶斯分类算法(native Bayesian classifier)、基于支持向量机(SVM)的分类器，神经网络法，k-最近邻法(k-nearest neighbor，kNN)，模糊分类法等等(所有这些分类算法日后在本blog内都会一一陆续阐述)。    分类作为一种监督学习方法，要求必须事先明确知道各个类别的信息，并且断言所有待分类项都有一个类别与之对应。但是很多时候上述条件得不到满足，尤其是在处理海量数据的时候，如果通过预处理使得数据满足分类算法的要求，则代价非常大，这时候可以考虑使用聚类算法。    而K均值(K-means clustering)聚类则是最典型的聚类算法(当然，除此之外，还有很多诸如属于划分法K-MEDOIDS算法、CLARANS算法；属于层次法的BIRCH算法、CURE算法、CHAMELEON算法等；基于密度的方法：DBSCAN算法、OPTICS算法、DENCLUE算法等；基于网格的方法：STING算法、CLIQUE算法、WAVE-CLUSTER算法；基于模型的方法，本系列后续会介绍其中几种)。  监督学习与无监督学习    机器学习发展到现在，一般划分为 监督学习(supervised learning)，半监督学习(semi-supervised learning)以及无监督学习(unsupervised learning)三类。举个具体的对应例子，则是比如说，在NLP词义消岐中，也分为监督的消岐方法，和无监督的消岐方法。在有监督的消岐方法中，训练数据是已知的，即每个词的语义分类是被标注了的；而在无监督的消岐方法中，训练数据是未经标注的。    上面所介绍的常见的分类算法属于监督学习，聚类则属于无监督学习(反过来说，监督学习属于分类算法则不准确，因为监督学习只是说我们给样本sample同时打上了标签（label），然后同时利用样本和标签进行相应的学习任务，而不是仅仅局限于分类任务。常见的其他监督问题，比如相似性学习，特征学习等等也是监督的，但是不是分类)。    再举个例子，正如人们通过已知病例学习诊断技术那样，计算机要通过学习才能具有识别各种事物和现象的能力。用来进行学习的材料就是与被识别对象属于同类的有限数量样本。监督学习中在给予计算机学习样本的同时，还告诉计算各个样本所属的类别。若所给的学习样本不带有类别信息,就是无监督学习(浅显点说：同样是学习训练，监督学习中，给的样例比如是已经标注了如心脏病的，肝炎的；而无监督学习中，就是给你一大堆的样例，没有标明是何种病例的)。    而在支持向量机导论一书给监督学习下的定义是：当样例是输入/输出对给出时，称为监督学习，有关输入/输出函数关系的样例称为训练数据。而在无监督学习中，其数据不包含输出值，学习的任务是理解数据产生的过程。第一部分、决策树学习1.1、什么是决策树    咱们直接切入正题。所谓决策树，顾名思义，是一种树，一种依托于策略抉择而建立起来的树。    机器学习中，决策树是一个预测模型；他代表的是对象属性与对象值之间的一种映射关系。树中每个节点表示某个对象，而每个分叉路径则代表的某个可能的属性值，而每个叶结点则对应从根节点到该叶节点所经历的路径所表示的对象的值。决策树仅有单一输出，若欲有复数输出，可以建立独立的决策树以处理不同输出。    从数据产生决策树的机器学习技术叫做决策树学习, 通俗点说就是决策树，说白了，这是一种依托于分类、训练上的预测树，根据已知预测、归类未来。    来理论的太过抽象，下面举两个浅显易懂的例子：第一个例子    套用俗语，决策树分类的思想类似于找对象。现想象一个女孩的母亲要给这个女孩介绍男朋友，于是有了下面的对话：      女儿：多大年纪了？      母亲：26。      女儿：长的帅不帅？      母亲：挺帅的。      女儿：收入高不？      母亲：不算很高，中等情况。      女儿：是公务员不？      母亲：是，在税务局上班呢。      女儿：那好，我去见见。      这个女孩的决策过程就是典型的分类树决策。相当于通过年龄、长相、收入和是否公务员对将男人分为两个类别：见和不见。假设这个女孩对男人的要求是：30岁以下、长相中等以上并且是高收入者或中等以上收入的公务员，那么这个可以用下图表示女孩的决策逻辑：    也就是说，决策树的简单策略就是，好比公司招聘面试过程中筛选一个人的简历，如果你的条件相当好比如说某985/211重点大学博士毕业，那么二话不说，直接叫过来面试，如果非重点大学毕业，但实际项目经验丰富，那么也要考虑叫过来面试一下，即所谓具体情况具体分析、决策。但每一个未知的选项都是可以归类到已有的分类类别中的。第二个例子    此例子来自Tom M.Mitchell著的机器学习一书：    小王的目的是通过下周天气预报寻找什么时候人们会打高尔夫，他了解到人们决定是否打球的原因最主要取决于天气情况。而天气状况有晴，云和雨；气温用华氏温度表示；相对湿度用百分比；还有有无风。如此，我们便可以构造一棵决策树，如下（根据天气这个分类决策这天是否合适打网球）：    上述决策树对应于以下表达式：（Outlook=Sunny ^Humidity<=70）V （Outlook = Overcast）V （Outlook=Rain ^ Wind=Weak）1.2、ID3算法1.2.1、决策树学习之ID3算法    ID3算法是决策树算法的一种。想了解什么是ID3算法之前，我们得先明白一个概念：奥卡姆剃刀。奥卡姆剃刀（Occam's Razor, Ockham's Razor），又称“奥坎的剃刀”，是由14世纪逻辑学家、圣方济各会修士奥卡姆的威廉（William of Occam，约1285年至1349年）提出，他在《箴言书注》2卷15题说“切勿浪费较多东西，去做‘用较少的东西，同样可以做好的事情’。简单点说，便是：be simple。     ID3算法（Iterative Dichotomiser 3 迭代二叉树3代）是一个由Ross Quinlan发明的用于决策树的算法。这个算法便是建立在上述所介绍的奥卡姆剃刀的基础上：越是小型的决策树越优于大的决策树（be simple简单理论）。尽管如此，该算法也不是总是生成最小的树形结构，而是一个启发式算法。    OK，从信息论知识中我们知道，期望信息越小，信息增益越大，从而纯度越高。ID3算法的核心思想就是以信息增益度量属性选择，选择分裂后信息增益(很快，由下文你就会知道信息增益又是怎么一回事)最大的属性进行分裂。该算法采用自顶向下的贪婪搜索遍历可能的决策树空间。     所以，ID3的思想便是：自顶向下的贪婪搜索遍历可能的决策树空间构造决策树(此方法是ID3算法和C4.5算法的基础)；从“哪一个属性将在树的根节点被测试”开始；使用统计测试来确定每一个实例属性单独分类训练样例的能力，分类能力最好的属性作为树的根结点测试(如何定义或者评判一个属性是分类能力最好的呢？这便是下文将要介绍的信息增益，or 信息增益率)。然后为根结点属性的每个可能值产生一个分支，并把训练样例排列到适当的分支（也就是说，样例的该属性值对应的分支）之下。重复这个过程，用每个分支结点关联的训练样例来选取在该点被测试的最佳属性。这形成了对合格决策树的贪婪搜索，也就是算法从不回溯重新考虑以前的选择。    下图所示即是用于学习布尔函数的ID3算法概要：1.2.2、哪个属性是最佳的分类属性1、信息增益的度量标准：熵    上文中，我们提到：“ID3算法的核心思想就是以信息增益度量属性选择，选择分裂后信息增益(很快，由下文你就会知道信息增益又是怎么一回事)最大的属性进行分裂。”接下来，咱们就来看看这个信息增益是个什么概念(当然，在了解信息增益之前，你必须先理解：信息增益的度量标准：熵)。    上述的ID3算法的核心问题是选取在树的每个结点要测试的属性。我们希望选择的是最有利于分类实例的属性，信息增益(Information Gain)是用来衡量给定的属性区分训练样例的能力，而ID3算法在增长树的每一步使用信息增益从候选属性中选择属性。    为了精确地定义信息增益，我们先定义信息论中广泛使用的一个度量标准，称为熵（entropy），它刻画了任意样例集的纯度（purity）。给定包含关于某个目标概念的正反样例的样例集S，那么S相对这个布尔型分类的熵为：    上述公式中，p+代表正样例，比如在本文开头第二个例子中p+则意味着去打羽毛球，而p-则代表反样例，不去打球(在有关熵的所有计算中我们定义0log0为0)。    如果写代码实现熵的计算，则如下所示：//根据具体属性和值来计算熵  
+double ComputeEntropy(vector <vector <string> > remain_state, string attribute, string value,bool ifparent){  
+    vector<int> count (2,0);  
+    unsigned int i,j;  
+    bool done_flag = false;//哨兵值  
+    for(j = 1; j < MAXLEN; j++){  
+        if(done_flag) break;  
+        if(!attribute_row[j].compare(attribute)){  
+            for(i = 1; i < remain_state.size(); i++){  
+                if((!ifparent&&!remain_state[i][j].compare(value)) || ifparent){//ifparent记录是否算父节点  
+                    if(!remain_state[i][MAXLEN - 1].compare(yes)){  
+                        count[0]++;  
+                    }  
+                    else count[1]++;  
+                }  
+            }  
+            done_flag = true;  
+        }  
+    }  
+    if(count[0] == 0 || count[1] == 0 ) return 0;//全部是正实例或者负实例  
+    //具体计算熵 根据[+count[0],-count[1]],log2为底通过换底公式换成自然数底数  
+    double sum = count[0] + count[1];  
+    double entropy = -count[0]/sum*log(count[0]/sum)/log(2.0) - count[1]/sum*log(count[1]/sum)/log(2.0);  
+    return entropy;  
+}      举例来说，假设S是一个关于布尔概念的有14个样例的集合，它包括9个正例和5个反例（我们采用记号[9+，5-]来概括这样的数据样例），那么S相对于这个布尔样例的熵为：Entropy（[9+，5-]）=-（9/14）log2（9/14）-（5/14）log2（5/14）=0.940。    So，根据上述这个公式，我们可以得到：S的所有成员属于同一类，Entropy(S)=0； S的正反样例数量相等，Entropy(S)=1；S的正反样例数量不等，熵介于0，1之间，如下图所示：    信息论中对熵的一种解释，熵确定了要编码集合S中任意成员的分类所需要的最少二进制位数。更一般地，如果目标属性具有c个不同的值，那么S相对于c个状态的分类的熵定义为：     Pi为子集合中不同性(而二元分类即正样例和负样例)的样例的比例。2、信息增益度量期望的熵降低信息增益Gain(S,A)定义    已经有了熵作为衡量训练样例集合纯度的标准，现在可以定义属性分类训练数据的效力的度量标准。这个标准被称为“信息增益（information gain）”。简单的说，一个属性的信息增益就是由于使用这个属性分割样例而导致的期望熵降低(或者说，样本按照某属性划分时造成熵减少的期望)。更精确地讲，一个属性A相对样例集合S的信息增益Gain(S,A)被定义为：    其中 Values(A)是属性A所有可能值的集合，是S中属性A的值为v的子集。换句话来讲，Gain(S,A)是由于给定属性A的值而得到的关于目标函数值的信息。当对S的一个任意成员的目标值编码时，Gain(S,A)的值是在知道属性A的值后可以节省的二进制位数。    接下来，有必要提醒读者一下：关于下面这两个概念 or 公式，    第一个Entropy(S)是熵定义，第二个则是信息增益Gain(S,A)的定义，而Gain(S,A)由第一个Entropy(S)计算出，记住了。    下面，举个例子，假定S是一套有关天气的训练样例，描述它的属性包括可能是具有Weak和Strong两个值的Wind。像前面一样，假定S包含14个样例，[9+，5-]。在这14个样例中，假定正例中的6个和反例中的2个有Wind =Weak，其他的有Wind=Strong。由于按照属性Wind分类14个样例得到的信息增益可以计算如下。    运用在本文开头举得第二个根据天气情况是否决定打羽毛球的例子上，得到的最佳分类属性如下图所示：     在上图中，计算了两个不同属性：湿度(humidity)和风力(wind)的信息增益，最终humidity这种分类的信息增益0.151>wind增益的0.048。说白了，就是在星期六上午是否适合打网球的问题诀策中，采取humidity较wind作为分类属性更佳，决策树由此而来。//计算信息增益，DFS构建决策树  
+//current_node为当前的节点  
+//remain_state为剩余待分类的样例  
+//remian_attribute为剩余还没有考虑的属性  
+//返回根结点指针  
+Node * BulidDecisionTreeDFS(Node * p, vector <vector <string> > remain_state, vector <string> remain_attribute){  
+    //if(remain_state.size() > 0){  
+        //printv(remain_state);  
+    //}  
+    if (p == NULL)  
+        p = new Node();  
+    //先看搜索到树叶的情况  
+    if (AllTheSameLabel(remain_state, yes)){  
+        p->attribute = yes;  
+        return p;  
+    }  
+    if (AllTheSameLabel(remain_state, no)){  
+        p->attribute = no;  
+        return p;  
+    }  
+    if(remain_attribute.size() == 0){//所有的属性均已经考虑完了,还没有分尽  
+        string label = MostCommonLabel(remain_state);  
+        p->attribute = label;  
+        return p;  
+    }  
+  
+    double max_gain = 0, temp_gain;  
+    vector <string>::iterator max_it;  
+    vector <string>::iterator it1;  
+    for(it1 = remain_attribute.begin(); it1 < remain_attribute.end(); it1++){  
+        temp_gain = ComputeGain(remain_state, (*it1));  
+        if(temp_gain > max_gain) {  
+            max_gain = temp_gain;  
+            max_it = it1;  
+        }  
+    }  
+    //下面根据max_it指向的属性来划分当前样例，更新样例集和属性集  
+    vector <string> new_attribute;  
+    vector <vector <string> > new_state;  
+    for(vector <string>::iterator it2 = remain_attribute.begin(); it2 < remain_attribute.end(); it2++){  
+        if((*it2).compare(*max_it)) new_attribute.push_back(*it2);  
+    }  
+    //确定了最佳划分属性，注意保存  
+    p->attribute = *max_it;  
+    vector <string> values = map_attribute_values[*max_it];  
+    int attribue_num = FindAttriNumByName(*max_it);  
+    new_state.push_back(attribute_row);  
+    for(vector <string>::iterator it3 = values.begin(); it3 < values.end(); it3++){  
+        for(unsigned int i = 1; i < remain_state.size(); i++){  
+            if(!remain_state[i][attribue_num].compare(*it3)){  
+                new_state.push_back(remain_state[i]);  
+            }  
+        }  
+        Node * new_node = new Node();  
+        new_node->arrived_value = *it3;  
+        if(new_state.size() == 0){//表示当前没有这个分支的样例，当前的new_node为叶子节点  
+            new_node->attribute = MostCommonLabel(remain_state);  
+        }  
+        else   
+            BulidDecisionTreeDFS(new_node, new_state, new_attribute);  
+        //递归函数返回时即回溯时需要1 将新结点加入父节点孩子容器 2清除new_state容器  
+        p->childs.push_back(new_node);  
+        new_state.erase(new_state.begin()+1,new_state.end());//注意先清空new_state中的前一个取值的样例，准备遍历下一个取值样例  
+    }  
+    return p;  
+}  1.2.3、ID3算法决策树的形成    OK，下图为ID3算法第一步后形成的部分决策树。这样综合起来看，就容易理解多了。1、overcast样例必为正，所以为叶子结点，总为yes；2、ID3无回溯，局部最优，而非全局最优，还有另一种树后修剪决策树。下图是ID3算法第一步后形成的部分决策树：    如上图，训练样例被排列到对应的分支结点。分支Overcast的所有样例都是正例，所以成为目标分类为Yes的叶结点。另两个结点将被进一步展开，方法是按照新的样例子集选取信息增益最高的属性。1.3、C4.5算法1.3.1、ID3算法的改进：C4.5算法    C4.5，是机器学习算法中的另一个分类决策树算法，它是决策树(决策树也就是做决策的节点间的组织方式像一棵树，其实是一个倒树)核心算法，也是上文1.2节所介绍的ID3的改进算法，所以基本上了解了一半决策树构造方法就能构造它。    决策树构造方法其实就是每次选择一个好的特征以及分裂点作为当前节点的分类条件。    既然说C4.5算法是ID3的改进算法，那么C4.5相比于ID3改进的地方有哪些呢？：用信息增益率来选择属性。ID3选择属性用的是子树的信息增益，这里可以用很多方法来定义信息，ID3使用的是熵(entropy，熵是一种不纯度度量准则),也就是熵的变化值，而C4.5用的是信息增益率。对，区别就在于一个是信息增益，一个是信息增益率。在树构造过程中进行剪枝，在构造决策树的时候，那些挂着几个元素的节点，不考虑最好，不然容易导致overfitting。对非离散数据也能处理。能够对不完整数据进行处理    针对上述第一点，解释下：一般来说率就是用来取平衡用的，就像方差起的作用差不多，比如有两个跑步的人，一个起点是10m/s的人、其10s后为20m/s；另一个人起速是1m/s、其1s后为2m/s。如果紧紧算差值那么两个差距就很大了，如果使用速度增加率(加速度，即都是为1m/s^2)来衡量，2个人就是一样的加速度。因此，C4.5克服了ID3用信息增益选择属性时偏向选择取值多的属性的不足。C4.5算法之信息增益率    OK，既然上文中提到C4.5用的是信息增益率，那增益率的具体是如何定义的呢？：    是的，在这里，C4.5算法不再是通过信息增益来选择决策属性。一个可以选择的度量标准是增益比率gain ratio（Quinlan 1986）。增益比率度量是用前面的增益度量Gain(S，A)和分裂信息度量SplitInformation(S，A)来共同定义的，如下所示：    其中，分裂信息度量被定义为(分裂信息用来衡量属性分裂数据的广度和均匀)：       其中S1到Sc是c个值的属性A分割S而形成的c个样例子集。注意分裂信息实际上就是S关于属性A的各值的熵。这与我们前面对熵的使用不同，在那里我们只考虑S关于学习到的树要预测的目标属性的值的熵。    请注意，分裂信息项阻碍选择值为均匀分布的属性。例如，考虑一个含有n个样例的集合被属性A彻底分割（译注：分成n组，即一个样例一组）。这时分裂信息的值为log2n。相反，一个布尔属性B分割同样的n个实例，如果恰好平分两半，那么分裂信息是1。如果属性A和B产生同样的信息增益，那么根据增益比率度量，明显B会得分更高。    使用增益比率代替增益来选择属性产生的一个实际问题是，当某个Si接近S（|Si|»|S|）时分母可能为0或非常小。如果某个属性对于S的所有样例有几乎同样的值，这时要么导致增益比率未定义，要么是增益比率非常大。为了避免选择这种属性，我们可以采用这样一些启发式规则，比如先计算每个属性的增益，然后仅对那些增益高过平均值的属性应用增益比率测试（Quinlan 1986）。    除了信息增益，Lopez de Mantaras（1991）介绍了另一种直接针对上述问题而设计的度量，它是基于距离的（distance-based）。这个度量标准基于所定义的一个数据划分间的距离尺度。具体更多请参看：Tom M.Mitchhell所著的机器学习之3.7.3节。1.3.2、C4.5算法构造决策树的过程Function C4.5(R:包含连续属性的无类别属性集合,C:类别属性,S:训练集)
+/*返回一棵决策树*/
+Begin
+   If S为空,返回一个值为Failure的单个节点;
+   If S是由相同类别属性值的记录组成,
+      返回一个带有该值的单个节点;
+   If R为空,则返回一个单节点,其值为在S的记录中找出的频率最高的类别属性值;
+   [注意未出现错误则意味着是不适合分类的记录]；
+  For 所有的属性R(Ri) Do
+        If 属性Ri为连续属性，则
+     Begin
+           将Ri的最小值赋给A1：
+        将Rm的最大值赋给Am；/*m值手工设置*/
+           For j From 2 To m-1 Do Aj=A1+j*(A1Am)/m;
+           将Ri点的基于{< =Aj,>Aj}的最大信息增益属性(Ri,S)赋给A；
+     End；
+  将R中属性之间具有最大信息增益的属性(D,S)赋给D;
+   将属性D的值赋给{dj/j=1,2...m}；
+  将分别由对应于D的值为dj的记录组成的S的子集赋给{sj/j=1,2...m};
+   返回一棵树，其根标记为D;树枝标记为d1,d2...dm;
+   再分别构造以下树:
+   C4.5(R-{D},C,S1),C4.5(R-{D},C,S2)...C4.5(R-{D},C,Sm);
+End C4.51.3.3、C4.5算法实现中的几个关键步骤    在上文中，我们已经知道了决策树学习C4.5算法中4个重要概念的表达，如下：    接下来，咱们写下代码实现，    1、信息熵double C4_5::entropy(int *attrClassCount, int classNum, int allNum){
+	double iEntropy = 0.0;
+	for(int i = 0; i < classNum; i++){
+		double temp = ((double)attrClassCount[i]) / allNum;
+		if(temp != 0.0)
+			iEntropy -= temp * (log(temp) / log(2.0));
+	}
+	return iEntropy;
+}    2、信息增益率double C4_5::gainRatio(int classNum, vector<int *> attriCount, double pEntropy){
+	int* attriNum = new int[attriCount.size()];
+	int allNum = 0;
+
+	for(int i = 0; i < (int)attriCount.size(); i++){
+		attriNum[i] = 0;
+		for(int j = 0; j < classNum; j++){
+			attriNum[i] += attriCount[i][j];
+			allNum += attriCount[i][j];
+		}
+	}
+	double gain = 0.0;
+	double splitInfo = 0.0;
+	for(int i = 0; i < (int)attriCount.size(); i++){
+		gain -= ((double)attriNum[i]) / allNum * entropy(attriCount[i], classNum, attriNum[i]);
+		splitInfo -= ((double)attriNum[i]) / allNum * (log(((double)attriNum[i])/allNum) / log(2.0));
+	}
+	gain += pEntropy;
+	delete[] attriNum; 
+	return (gain / splitInfo);
+}    3、选取最大增益属性作为分类条件int C4_5::chooseAttribute(vector<int> attrIndex, vector<int *>* sampleCount){
+	int bestIndex = 0;
+	double maxGainRatio = 0.0;
+	int classNum = (int)(decisions[attrIndex[(int)attrIndex.size()-1]]).size();//number of class
+
+	//computer the class entropy
+	int* temp = new int[classNum];
+	int allNum = 0;
+	for(int i = 0; i < classNum; i++){
+		temp[i] = sampleCount[(int)attrIndex.size()-1][i][i];
+		allNum += temp[i];
+	}
+	double pEntropy = entropy(temp, classNum, allNum);
+	delete[] temp;
+
+	//computer gain ratio for every attribute
+	for(int i = 0; i < (int)attrIndex.size()-1; i++){
+		double gainR = gainRatio(classNum, sampleCount[i], pEntropy);
+		if(gainR > maxGainRatio){
+			bestIndex = i;
+			maxGainRatio = gainR;
+		}
+	}
+	return bestIndex;
+}    4、还有一系列建树，打印树的步骤，此处略过。1.4、读者点评form Wind：决策树使用于特征取值离散的情况，连续的特征一般也要处理成离散的(而很多文章没有表达出决策树的关键特征or概念)。实际应用中，决策树overfitting比较的严重，一般要做boosting。分类器的性能上不去，很主要的原因在于特征的鉴别性不足，而不是分类器的好坏，好的特征才有好的分类效果，分类器只是弱相关。 那如何提高 特征的鉴别性呢？一是设计特征时尽量引入domain knowledge，二是对提取出来的特征做选择、变换和再学习，这一点是机器学习算法不管的部分(我说的这些不是针对决策树的，因此不能说是决策树的特点，只是一些机器学习算法在应用过程中的经验体会)。第二部分、贝叶斯分类    说实话，友人刘未鹏有一篇讲的贝叶斯的文章：数学之美番外篇：平凡而又神奇的贝叶斯方法，已经把贝叶斯讲的很清晰透彻了，我再讲也是如李白看到崔颢在黄鹤楼上所提的：登黄鹤楼昔人已乘黄鹤去，此地空余黄鹤楼；黄鹤一去不复返，白云千载空悠悠。    后便大为折服，已无什兴致再提了(偶现在就是这感觉)，然文章还得继续写。So，本文第二部分之大部分基本整理自未鹏兄之手(做了部分改动)，若有任何不妥之处，还望读者和未鹏兄海涵，谢谢。2.1、什么是贝叶斯分类     据维基百科上的介绍，贝叶斯定理是关于随机事件A和B的条件概率和边缘概率的一则定理。    如上所示，其中P(A|B)是在B发生的情况下A发生的可能性。在贝叶斯定理中，每个名词都有约定俗成的名称：P(A)是A的先验概率或边缘概率。之所以称为"先验"是因為它不考虑任何B方面的因素。P(A|B)是已知B发生后A的条件概率（直白来讲，就是先有B而后=>才有A），也由于得自B的取值而被称作A的后验概率。P(B|A)是已知A发生后B的条件概率（直白来讲，就是先有A而后=>才有B），也由于得自A的取值而被称作B的后验概率。P(B)是B的先验概率或边缘概率，也作标准化常量（normalized constant）。    按这些术语，Bayes定理可表述为：后验概率 = (相似度*先验概率)/标准化常量，也就是說，后验概率与先验概率和相似度的乘积成正比。另外，比例P(B|A)/P(B)也有时被称作标准相似度（standardised likelihood），Bayes定理可表述为：后验概率 = 标准相似度*先验概率。2.2 贝叶斯公式如何而来    贝叶斯公式是怎么来的？下面再举wikipedia 上的一个例子：一所学校里面有 60% 的男生，40% 的女生。男生总是穿长裤，女生则一半穿长裤一半穿裙子。有了这些信息之后我们可以容易地计算“随机选取一个学生，他（她）穿长裤的概率和穿裙子的概率是多大”，这个就是前面说的“正向概率”的计算。然而，假设你走在校园中，迎面走来一个穿长裤的学生（很不幸的是你高度近似，你只看得见他（她）穿的是否长裤，而无法确定他（她）的性别），你能够推断出他（她）是男生的概率是多大吗？    一些认知科学的研究表明（《决策与判断》以及《Rationality for Mortals》第12章：小孩也可以解决贝叶斯问题），我们对形式化的贝叶斯问题不擅长，但对于以频率形式呈现的等价问题却很擅长。在这里，我们不妨把问题重新叙述成：你在校园里面随机游走，遇到了 N 个穿长裤的人（仍然假设你无法直接观察到他们的性别），问这 N 个人里面有多少个女生多少个男生。    你说，这还不简单：算出学校里面有多少穿长裤的，然后在这些人里面再算出有多少女生，不就行了？    我们来算一算：假设学校里面人的总数是 U 个。60% 的男生都穿长裤，于是我们得到了 U * P(Boy) * P(Pants|Boy) 个穿长裤的（男生）（其中 P(Boy) 是男生的概率 = 60%，这里可以简单的理解为男生的比例；P(Pants|Boy) 是条件概率，即在 Boy 这个条件下穿长裤的概率是多大，这里是 100% ，因为所有男生都穿长裤）。40% 的女生里面又有一半（50%）是穿长裤的，于是我们又得到了 U * P(Girl) * P(Pants|Girl) 个穿长裤的（女生）。加起来一共是 U * P(Boy) * P(Pants|Boy) + U * P(Girl) * P(Pants|Girl) 个穿长裤的，其中有 U * P(Girl) * P(Pants|Girl) 个女生。两者一比就是你要求的答案。    下面我们把这个答案形式化一下：我们要求的是 P(Girl|Pants) （穿长裤的人里面有多少女生），我们计算的结果是 U * P(Girl) * P(Pants|Girl) / [U * P(Boy) * P(Pants|Boy) + U * P(Girl) * P(Pants|Girl)] 。容易发现这里校园内人的总数是无关的，两边同时消去U，于是得到P(Girl|Pants) = P(Girl) * P(Pants|Girl) / [P(Boy) * P(Pants|Boy) + P(Girl) * P(Pants|Girl)]    注意，如果把上式收缩起来，分母其实就是 P(Pants) ，分子其实就是 P(Pants, Girl) 。而这个比例很自然地就读作：在穿长裤的人（ P(Pants) ）里面有多少（穿长裤）的女孩（ P(Pants, Girl) ）。    上式中的 Pants 和 Boy/Girl 可以指代一切东西，So，其一般形式就是：P(B|A) = P(A|B) * P(B) / [P(A|B) * P(B) + P(A|~B) * P(~B) ]    收缩起来就是：P(B|A) = P(AB) / P(A)    其实这个就等于：P(B|A) * P(A) = P(AB)    更进一步阐述，P(B|A)便是在条件A的情况下，B出现的概率是多大。然看似这么平凡的贝叶斯公式，背后却隐含着非常深刻的原理。2.3、拼写纠正    经典著作《人工智能：现代方法》的作者之一 Peter Norvig 曾经写过一篇介绍如何写一个拼写检查/纠正器的文章，里面用到的就是贝叶斯方法，下面，将其核心思想简单描述下。    首先，我们需要询问的是：“问题是什么？”    问题是我们看到用户输入了一个不在字典中的单词，我们需要去猜测：“这个家伙到底真正想输入的单词是什么呢？”用刚才我们形式化的语言来叙述就是，我们需要求：P(我们猜测他想输入的单词 | 他实际输入的单词)    这个概率。并找出那个使得这个概率最大的猜测单词。显然，我们的猜测未必是唯一的，就像前面举的那个自然语言的歧义性的例子一样；这里，比如用户输入： thew ，那么他到底是想输入 the ，还是想输入 thaw ？到底哪个猜测可能性更大呢？幸运的是我们可以用贝叶斯公式来直接出它们各自的概率，我们不妨将我们的多个猜测记为 h1 h2 .. （ h 代表 hypothesis），它们都属于一个有限且离散的猜测空间 H （单词总共就那么多而已），将用户实际输入的单词记为 D （ D 代表 Data ，即观测数据），于是P(我们的猜测1 | 他实际输入的单词)    可以抽象地记为：P(h1 | D)    类似地，对于我们的猜测2，则是 P(h2 | D)。不妨统一记为：P(h | D)运用一次贝叶斯公式，我们得到：P(h | D) = P(h) * P(D | h) / P(D)    对于不同的具体猜测 h1 h2 h3 .. ，P(D) 都是一样的，所以在比较 P(h1 | D) 和 P(h2 | D) 的时候我们可以忽略这个常数。即我们只需要知道：P(h | D) ∝ P(h) * P(D | h) （注：那个符号的意思是“正比例于”，不是无穷大，注意符号右端是有一个小缺口的。）    这个式子的抽象含义是：对于给定观测数据，一个猜测是好是坏，取决于“这个猜测本身独立的可能性大小（先验概率，Prior ）”和“这个猜测生成我们观测到的数据的可能性大小”（似然，Likelihood ）的乘积。具体到我们的那个 thew 例子上，含义就是，用户实际是想输入 the 的可能性大小取决于 the 本身在词汇表中被使用的可能性（频繁程度）大小（先验概率）和 想打 the 却打成 thew 的可能性大小（似然）的乘积。    剩下的事情就很简单了，对于我们猜测为可能的每个单词计算一下 P(h) * P(D | h) 这个值，然后取最大的，得到的就是最靠谱的猜测。更多细节请参看未鹏兄之原文。2.4、贝叶斯的应用2.4.1、中文分词    贝叶斯是机器学习的核心方法之一。比如中文分词领域就用到了贝叶斯。浪潮之巅的作者吴军在《数学之美》系列中就有一篇是介绍中文分词的。这里介绍一下核心的思想，不做赘述，详细请参考吴军的原文。    分词问题的描述为：给定一个句子（字串），如：    南京市长江大桥    如何对这个句子进行分词（词串）才是最靠谱的。例如： 1. 南京市/长江大桥2. 南京/市长/江大桥    这两个分词，到底哪个更靠谱呢？    我们用贝叶斯公式来形式化地描述这个问题，令 X 为字串（句子），Y 为词串（一种特定的分词假设）。我们就是需要寻找使得 P(Y|X) 最大的 Y ，使用一次贝叶斯可得：P(Y|X) ∝ P(Y)*P(X|Y)     用自然语言来说就是 这种分词方式（词串）的可能性 乘以 这个词串生成我们的句子的可能性。我们进一步容易看到：可以近似地将 P(X|Y) 看作是恒等于 1 的，因为任意假想的一种分词方式之下生成我们的句子总是精准地生成的（只需把分词之间的分界符号扔掉即可）。于是，我们就变成了去最大化 P(Y) ，也就是寻找一种分词使得这个词串（句子）的概率最大化。而如何计算一个词串：W1, W2, W3, W4 ..    的可能性呢？我们知道，根据联合概率的公式展开：P(W1, W2, W3, W4 ..) = P(W1) * P(W2|W1) * P(W3|W2, W1) * P(W4|W1,W2,W3) * .. 于是我们可以通过一系列的条件概率（右式）的乘积来求整个联合概率。然而不幸的是随着条件数目的增加（P(Wn|Wn-1,Wn-2,..,W1) 的条件有 n-1 个），数据稀疏问题也会越来越严重，即便语料库再大也无法统计出一个靠谱的 P(Wn|Wn-1,Wn-2,..,W1) 来。为了缓解这个问题，计算机科学家们一如既往地使用了“天真”假设：我们假设句子中一个词的出现概率只依赖于它前面的有限的 k 个词（k 一般不超过 3，如果只依赖于前面的一个词，就是2元语言模型（2-gram），同理有 3-gram 、 4-gram 等），这个就是所谓的“有限地平线”假设。     虽然上面这个假设很傻很天真，但结果却表明它的结果往往是很好很强大的，后面要提到的朴素贝叶斯方法使用的假设跟这个精神上是完全一致的，我们会解释为什么像这样一个天真的假设能够得到强大的结果。目前我们只要知道，有了这个假设，刚才那个乘积就可以改写成： P(W1) * P(W2|W1) * P(W3|W2) * P(W4|W3) .. （假设每个词只依赖于它前面的一个词）。而统计 P(W2|W1) 就不再受到数据稀疏问题的困扰了。对于我们上面提到的例子“南京市长江大桥”，如果按照自左到右的贪婪方法分词的话，结果就成了“南京市长/江大桥”。但如果按照贝叶斯分词的话（假设使用 3-gram），由于“南京市长”和“江大桥”在语料库中一起出现的频率为 0 ，这个整句的概率便会被判定为 0 。 从而使得“南京市/长江大桥”这一分词方式胜出。2.4.2、贝叶斯图像识别，Analysis by Synthesis    贝叶斯方法是一个非常 general 的推理框架。其核心理念可以描述成：Analysis by Synthesis （通过合成来分析）。06 年的认知科学新进展上有一篇 paper 就是讲用贝叶斯推理来解释视觉识别的，一图胜千言，下图就是摘自这篇 paper ：    首先是视觉系统提取图形的边角特征，然后使用这些特征自底向上地激活高层的抽象概念（比如是 E 还是 F 还是等号），然后使用一个自顶向下的验证来比较到底哪个概念最佳地解释了观察到的图像。2.4.3、最大似然与最小二乘    学过线性代数的大概都知道经典的最小二乘方法来做线性回归。问题描述是：给定平面上 N 个点，（这里不妨假设我们想用一条直线来拟合这些点——回归可以看作是拟合的特例，即允许误差的拟合），找出一条最佳描述了这些点的直线。    一个接踵而来的问题就是，我们如何定义最佳？我们设每个点的坐标为 (Xi, Yi) 。如果直线为 y = f(x) 。那么 (Xi, Yi) 跟直线对这个点的“预测”：(Xi, f(Xi)) 就相差了一个 ΔYi = |Yi – f(Xi)| 。最小二乘就是说寻找直线使得 (ΔY1)^2 + (ΔY2)^2 + .. （即误差的平方和）最小，至于为什么是误差的平方和而不是误差的绝对值和，统计学上也没有什么好的解释。然而贝叶斯方法却能对此提供一个完美的解释。    我们假设直线对于坐标 Xi 给出的预测 f(Xi) 是最靠谱的预测，所有纵坐标偏离 f(Xi) 的那些数据点都含有噪音，是噪音使得它们偏离了完美的一条直线，一个合理的假设就是偏离路线越远的概率越小，具体小多少，可以用一个正态分布曲线来模拟，这个分布曲线以直线对 Xi 给出的预测 f(Xi) 为中心，实际纵坐标为 Yi 的点 (Xi, Yi) 发生的概率就正比于 EXP[-(ΔYi)^2]。（EXP(..) 代表以常数 e 为底的多少次方）。    现在我们回到问题的贝叶斯方面，我们要想最大化的后验概率是：P(h|D) ∝ P(h) * P(D|h)    又见贝叶斯！这里 h 就是指一条特定的直线，D 就是指这 N 个数据点。我们需要寻找一条直线 h 使得 P(h) * P(D|h) 最大。很显然，P(h) 这个先验概率是均匀的，因为哪条直线也不比另一条更优越。所以我们只需要看 P(D|h) 这一项，这一项是指这条直线生成这些数据点的概率，刚才说过了，生成数据点 (Xi, Yi) 的概率为 EXP[-(ΔYi)^2] 乘以一个常数。而 P(D|h) = P(d1|h) * P(d2|h) * .. 即假设各个数据点是独立生成的，所以可以把每个概率乘起来。于是生成 N 个数据点的概率为 EXP[-(ΔY1)^2] * EXP[-(ΔY2)^2] * EXP[-(ΔY3)^2] * .. = EXP{-[(ΔY1)^2 + (ΔY2)^2 + (ΔY3)^2 + ..]} 最大化这个概率就是要最小化 (ΔY1)^2 + (ΔY2)^2 + (ΔY3)^2 + .. 。 熟悉这个式子吗？    除了以上所介绍的之外，贝叶斯还在词义消岐，语言模型的平滑方法中都有一定应用。下节，咱们再来简单看下朴素贝叶斯方法。2.5、朴素贝叶斯方法    朴素贝叶斯方法是一个很特别的方法，所以值得介绍一下。在众多的分类模型中，应用最为广泛的两种分类模型是决策树模型(Decision Tree Model)和朴素贝叶斯模型（Naive Bayesian Model，NBC）。 朴素贝叶斯模型发源于古典数学理论，有着坚实的数学基础，以及稳定的分类效率。     同时，NBC模型所需估计的参数很少，对缺失数据不太敏感，算法也比较简单。理论上，NBC模型与其他分类方法相比具有最小的误差率。但是实际上并非总是如此，这是因为NBC模型假设属性之间相互独立，这个假设在实际应用中往往是不成立的，这给NBC模型的正确分类带来了一定影响。在属性个数比较多或者属性之间相关性较大时，NBC模型的分类效率比不上决策树模型。而在属性相关性较小时，NBC模型的性能最为良好。    接下来，我们用朴素贝叶斯在垃圾邮件过滤中的应用来举例说明。2.5.1、贝叶斯垃圾邮件过滤器    问题是什么？问题是，给定一封邮件，判定它是否属于垃圾邮件。按照先例，我们还是用 D 来表示这封邮件，注意 D 由 N 个单词组成。我们用 h+ 来表示垃圾邮件，h- 表示正常邮件。问题可以形式化地描述为求：P(h+|D) = P(h+) * P(D|h+) / P(D)P(h-|D) = P(h-) * P(D|h-) / P(D)    其中 P(h+) 和 P(h-) 这两个先验概率都是很容易求出来的，只需要计算一个邮件库里面垃圾邮件和正常邮件的比例就行了。然而 P(D|h+) 却不容易求，因为 D 里面含有 N 个单词 d1, d2, d3, .. ，所以P(D|h+) = P(d1,d2,..,dn|h+) 。我们又一次遇到了数据稀疏性，为什么这么说呢？P(d1,d2,..,dn|h+) 就是说在垃圾邮件当中出现跟我们目前这封邮件一模一样的一封邮件的概率是多大！开玩笑，每封邮件都是不同的，世界上有无穷多封邮件。瞧，这就是数据稀疏性，因为可以肯定地说，你收集的训练数据库不管里面含了多少封邮件，也不可能找出一封跟目前这封一模一样的。结果呢？我们又该如何来计算 P(d1,d2,..,dn|h+) 呢？    我们将 P(d1,d2,..,dn|h+)  扩展为： P(d1|h+) * P(d2|d1, h+) * P(d3|d2,d1, h+) * .. 。熟悉这个式子吗？这里我们会使用一个更激进的假设，我们假设 di 与 di-1 是完全条件无关的，于是式子就简化为 P(d1|h+) * P(d2|h+) * P(d3|h+) * .. 。这个就是所谓的条件独立假设，也正是朴素贝叶斯方法的朴素之处。而计算 P(d1|h+) * P(d2|h+) * P(d3|h+) * .. 就太简单了，只要统计 di 这个单词在垃圾邮件中出现的频率即可。关于贝叶斯垃圾邮件过滤更多的内容可以参考这个条目，注意其中提到的其他资料。2.6、层级贝叶斯模型    层级贝叶斯模型是现代贝叶斯方法的标志性建筑之一。前面讲的贝叶斯，都是在同一个事物层次上的各个因素之间进行统计推理，然而层次贝叶斯模型在哲学上更深入了一层，将这些因素背后的因素（原因的原因，原因的原因，以此类推）囊括进来。一个教科书例子是：如果你手头有 N 枚硬币，它们是同一个工厂铸出来的，你把每一枚硬币掷出一个结果，然后基于这 N 个结果对这 N 个硬币的 θ （出现正面的比例）进行推理。如果根据最大似然，每个硬币的 θ 不是 1 就是 0 （这个前面提到过的），然而我们又知道每个硬币的 p(θ) 是有一个先验概率的，也许是一个 beta 分布。也就是说，每个硬币的实际投掷结果 Xi 服从以 θ 为中心的正态分布，而 θ 又服从另一个以 Ψ 为中心的 beta 分布。层层因果关系就体现出来了。进而 Ψ 还可能依赖于因果链上更上层的因素，以此类推。2.7、基于newsgroup文档集的贝叶斯算法实现2.7.1、newsgroup文档集介绍与预处理    Newsgroups最早由Lang于1995收集并在[Lang 1995]中使用。它含有20000篇左右的Usenet文档，几乎平均分配20个不同的新闻组。除了其中4.5%的文档属于两个或两个以上的新闻组以外，其余文档仅属于一个新闻组，因此它通常被作为单标注分类问题来处理。Newsgroups已经成为文本分类聚类中常用的文档集。美国MIT大学Jason Rennie对Newsgroups作了必要的处理，使得每个文档只属于一个新闻组，形成Newsgroups-18828。  （注：本2.7节内容主要援引自参考文献条目8的内容，有任何不妥之处，还望原作者及众读者海涵，谢谢)    要做文本分类首先得完成文本的预处理，预处理的主要步骤如下：英文词法分析，去除数字、连字符、标点符号、特殊 字符，所有大写字母转换成小写，可以用正则表达式：String res[] = line.split("[^a-zA-Z]")；去停用词，过滤对分类无价值的词；词根还原stemming，基于Porter算法。    private static String lineProcess(String line, ArrayList<String> stopWordsArray) throws IOException {  
+        // TODO Auto-generated method stub  
+        //step1 英文词法分析，去除数字、连字符、标点符号、特殊字符，所有大写字母转换成小写，可以考虑用正则表达式  
+        String res[] = line.split("[^a-zA-Z]");  
+        //这里要小心，防止把有单词中间有数字和连字符的单词 截断了，但是截断也没事  
+          
+        String resString = new String();  
+        //step2去停用词  
+        //step3stemming,返回后一起做  
+        for(int i = 0; i < res.length; i++){  
+            if(!res[i].isEmpty() && !stopWordsArray.contains(res[i].toLowerCase())){  
+                resString += " " + res[i].toLowerCase() + " ";  
+            }  
+        }  
+        return resString;  
+    } 2.7.2、特征词的选取    首先统计经过预处理后在所有文档中出现不重复的单词一共有87554个，对这些词进行统计发现： 出现次数大于等于1次的词有87554个 出现次数大于等于3次的词有36456个  出现次数大于等于4次的词有30095个    特征词的选取策略： 策略一：保留所有词作为特征词 共计87554个 策略二：选取出现次数大于等于4次的词作为特征词共计30095个     特征词的选取策略：采用策略一，后面将对两种特征词选取策略的计算时间和平均准确率做对比2.7.3、贝叶斯算法描述及实现    根据朴素贝叶斯公式，每个测试样例属于某个类别的概率 =  所有测试样例包含特征词类条件概率P(tk|c)之积 * 先验概率P(c)在具体计算类条件概率和先验概率时，朴素贝叶斯分类器有两种模型：    (1) 多项式模型( multinomial model )  –以单词为粒度 类条件概率P(tk|c)=(类c下单词tk在各个文档中出现过的次数之和+1)/（类c下单词总数+训练样本中不重复特征词总数） 先验概率P(c)=类c下的单词总数/整个训练样本的单词总数    (2) 伯努利模型（Bernoulli model）   –以文件为粒度 类条件概率P(tk|c)=（类c下包含单词tk的文件数+1）/(类c下文件总数+2) 先验概率P(c)=类c下文件总数/整个训练样本的文件总数 本分类器选用多项式模型计算，根据斯坦福的《Introduction to Information Retrieval 》课件上所说，多项式模型计算准确率更高。    贝叶斯算法的实现有以下注意点：计算概率用到了BigDecimal类实现任意精度计算；用交叉验证法做十次分类实验，对准确率取平均值；根据正确类目文件和分类结果文计算混淆矩阵并且输出； Map<String,Double> cateWordsProb key为“类目_单词”, value为该类目下该单词的出现次数，避免重复计算。    贝叶斯算法实现类如下NaiveBayesianClassifier.java（author：yangliu）package com.pku.yangliu;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.Vector;
+
+/**利用朴素贝叶斯算法对newsgroup文档集做分类，采用十组交叉测试取平均值
+ * 采用多项式模型,stanford信息检索导论课件上面言多项式模型比伯努利模型准确度高
+ * 类条件概率P(tk|c)=(类c 下单词tk 在各个文档中出现过的次数之和+1)/(类c下单词总数+|V|)
+ */
+public class NaiveBayesianClassifier {
+	
+	/**用贝叶斯法对测试文档集分类
+	 * @param trainDir 训练文档集目录
+	 * @param testDir 测试文档集目录
+	 * @param classifyResultFileNew 分类结果文件路径
+	 * @throws Exception 
+	 */
+	private void doProcess(String trainDir, String testDir,
+			String classifyResultFileNew) throws Exception {
+		// TODO Auto-generated method stub
+		Map<String,Double> cateWordsNum = new TreeMap<String,Double>();//保存训练集每个类别的总词数
+		Map<String,Double> cateWordsProb = new TreeMap<String,Double>();//保存训练样本每个类别中每个属性词的出现词数
+		cateWordsProb = getCateWordsProb(trainDir);
+		cateWordsNum = getCateWordsNum(trainDir);
+		double totalWordsNum = 0.0;//记录所有训练集的总词数
+		Set<Map.Entry<String,Double>> cateWordsNumSet = cateWordsNum.entrySet();
+		for(Iterator<Map.Entry<String,Double>> it = cateWordsNumSet.iterator(); it.hasNext();){
+			Map.Entry<String, Double> me = it.next();
+			totalWordsNum += me.getValue();
+		}
+		//下面开始读取测试样例做分类
+		Vector<String> testFileWords = new Vector<String>();
+		String word;
+		File[] testDirFiles = new File(testDir).listFiles();
+		FileWriter crWriter = new FileWriter(classifyResultFileNew);
+		for(int i = 0; i < testDirFiles.length; i++){
+			File[] testSample = testDirFiles[i].listFiles();
+			for(int j = 0;j < testSample.length; j++){
+				testFileWords.clear();
+				FileReader spReader = new FileReader(testSample[j]);
+				BufferedReader spBR = new BufferedReader(spReader);
+				while((word = spBR.readLine()) != null){
+					testFileWords.add(word);
+				}
+				//下面分别计算该测试样例属于二十个类别的概率
+				File[] trainDirFiles = new File(trainDir).listFiles();
+				BigDecimal maxP = new BigDecimal(0);
+				String bestCate = null;
+				for(int k = 0; k < trainDirFiles.length; k++){
+					BigDecimal p = computeCateProb(trainDirFiles[k], testFileWords, cateWordsNum, totalWordsNum, cateWordsProb);
+					if(k == 0){
+						maxP = p;
+						bestCate = trainDirFiles[k].getName();
+						continue;
+					}
+					if(p.compareTo(maxP) == 1){
+						maxP = p;
+						bestCate = trainDirFiles[k].getName();
+					}
+				}
+				crWriter.append(testSample[j].getName() + " " + bestCate + "\n");
+				crWriter.flush();
+			}
+		}
+		crWriter.close();
+	}
+	
+	/**统计某类训练样本中每个单词的出现次数
+	 * @param strDir 训练样本集目录
+	 * @return Map<String,Double> cateWordsProb 用"类目_单词"对来索引的map,保存的val就是该类目下该单词的出现次数
+	 * @throws IOException 
+	 */
+	public Map<String,Double> getCateWordsProb(String strDir) throws IOException{
+		Map<String,Double> cateWordsProb = new TreeMap<String,Double>();
+		File sampleFile = new File(strDir);
+		File [] sampleDir = sampleFile.listFiles();
+		String word;
+		for(int i = 0;i < sampleDir.length; i++){
+			File [] sample = sampleDir[i].listFiles();
+			for(int j = 0; j < sample.length; j++){
+				FileReader samReader = new FileReader(sample[j]);
+				BufferedReader samBR = new BufferedReader(samReader);
+				while((word = samBR.readLine()) != null){
+					String key = sampleDir[i].getName() + "_" + word;
+					if(cateWordsProb.containsKey(key)){
+						double count = cateWordsProb.get(key) + 1.0;
+						cateWordsProb.put(key, count);
+					}
+					else {
+						cateWordsProb.put(key, 1.0);
+					}
+				}
+			}
+		}
+		return cateWordsProb;	
+	}
+	
+	/**计算某一个测试样本属于某个类别的概率
+	 * @param Map<String, Double> cateWordsProb 记录每个目录中出现的单词及次数 
+	 * @param File trainFile 该类别所有的训练样本所在目录
+	 * @param Vector<String> testFileWords 该测试样本中的所有词构成的容器
+	 * @param double totalWordsNum 记录所有训练样本的单词总数
+	 * @param Map<String, Double> cateWordsNum 记录每个类别的单词总数
+	 * @return BigDecimal 返回该测试样本在该类别中的概率
+	 * @throws Exception 
+	 * @throws IOException 
+	 */
+	private BigDecimal computeCateProb(File trainFile, Vector<String> testFileWords, Map<String, Double> cateWordsNum, double totalWordsNum, Map<String, Double> cateWordsProb) throws Exception {
+		// TODO Auto-generated method stub
+		BigDecimal probability = new BigDecimal(1);
+		double wordNumInCate = cateWordsNum.get(trainFile.getName());
+		BigDecimal wordNumInCateBD = new BigDecimal(wordNumInCate);
+		BigDecimal totalWordsNumBD = new BigDecimal(totalWordsNum);
+		for(Iterator<String> it = testFileWords.iterator(); it.hasNext();){
+			String me = it.next();
+			String key = trainFile.getName()+"_"+me;
+			double testFileWordNumInCate;
+			if(cateWordsProb.containsKey(key)){
+				testFileWordNumInCate = cateWordsProb.get(key);
+			}else testFileWordNumInCate = 0.0;
+			BigDecimal testFileWordNumInCateBD = new BigDecimal(testFileWordNumInCate);
+			BigDecimal xcProb = (testFileWordNumInCateBD.add(new BigDecimal(0.0001))).divide(totalWordsNumBD.add(wordNumInCateBD),10, BigDecimal.ROUND_CEILING);
+			probability = probability.multiply(xcProb);
+		}
+		BigDecimal res = probability.multiply(wordNumInCateBD.divide(totalWordsNumBD,10, BigDecimal.ROUND_CEILING));
+		return res;
+	}
+
+	/**获得每个类目下的单词总数
+	 * @param trainDir 训练文档集目录
+	 * @return Map<String, Double> <目录名，单词总数>的map
+	 * @throws IOException 
+	 */
+	private Map<String, Double> getCateWordsNum(String trainDir) throws IOException {
+		// TODO Auto-generated method stub
+		Map<String,Double> cateWordsNum = new TreeMap<String,Double>();
+		File[] sampleDir = new File(trainDir).listFiles();
+		for(int i = 0; i < sampleDir.length; i++){
+			double count = 0;
+			File[] sample = sampleDir[i].listFiles();
+			for(int j = 0;j < sample.length; j++){
+				FileReader spReader = new FileReader(sample[j]);
+				BufferedReader spBR = new BufferedReader(spReader);
+				while(spBR.readLine() != null){
+					count++;
+				}		
+			}
+			cateWordsNum.put(sampleDir[i].getName(), count);
+		}
+		return cateWordsNum;
+	}
+	
+	/**根据正确类目文件和分类结果文件统计出准确率
+	 * @param classifyResultFile 正确类目文件
+	 * @param classifyResultFileNew 分类结果文件
+	 * @return double 分类的准确率
+	 * @throws IOException 
+	 */
+	double computeAccuracy(String classifyResultFile,
+			String classifyResultFileNew) throws IOException {
+		// TODO Auto-generated method stub
+		Map<String,String> rightCate = new TreeMap<String,String>();
+		Map<String,String> resultCate = new TreeMap<String,String>();
+		rightCate = getMapFromResultFile(classifyResultFile);
+		resultCate = getMapFromResultFile(classifyResultFileNew);
+		Set<Map.Entry<String, String>> resCateSet = resultCate.entrySet();
+		double rightCount = 0.0;
+		for(Iterator<Map.Entry<String, String>> it = resCateSet.iterator(); it.hasNext();){
+			Map.Entry<String, String> me = it.next();
+			if(me.getValue().equals(rightCate.get(me.getKey()))){
+				rightCount ++;
+			}
+		}
+		computerConfusionMatrix(rightCate,resultCate);
+		return rightCount / resultCate.size();	
+	}
+	
+	/**根据正确类目文件和分类结果文计算混淆矩阵并且输出
+	 * @param rightCate 正确类目对应map
+	 * @param resultCate 分类结果对应map
+	 * @return double 分类的准确率
+	 * @throws IOException 
+	 */
+	private void computerConfusionMatrix(Map<String, String> rightCate,
+			Map<String, String> resultCate) {
+		// TODO Auto-generated method stub	
+		int[][] confusionMatrix = new int[20][20];
+		//首先求出类目对应的数组索引
+		SortedSet<String> cateNames = new TreeSet<String>();
+		Set<Map.Entry<String, String>> rightCateSet = rightCate.entrySet();
+		for(Iterator<Map.Entry<String, String>> it = rightCateSet.iterator(); it.hasNext();){
+			Map.Entry<String, String> me = it.next();
+			cateNames.add(me.getValue());
+		}
+		cateNames.add("rec.sport.baseball");//防止数少一个类目
+		String[] cateNamesArray = cateNames.toArray(new String[0]);
+		Map<String,Integer> cateNamesToIndex = new TreeMap<String,Integer>();
+		for(int i = 0; i < cateNamesArray.length; i++){
+			cateNamesToIndex.put(cateNamesArray[i],i);
+		}
+		for(Iterator<Map.Entry<String, String>> it = rightCateSet.iterator(); it.hasNext();){
+			Map.Entry<String, String> me = it.next();
+			confusionMatrix[cateNamesToIndex.get(me.getValue())][cateNamesToIndex.get(resultCate.get(me.getKey()))]++;
+		}
+		//输出混淆矩阵
+		double[] hangSum = new double[20];
+		System.out.print("    ");
+		for(int i = 0; i < 20; i++){
+			System.out.print(i + "    ");
+		}
+		System.out.println();
+		for(int i = 0; i < 20; i++){
+			System.out.print(i + "    ");
+			for(int j = 0; j < 20; j++){
+				System.out.print(confusionMatrix[i][j]+"    ");
+				hangSum[i] += confusionMatrix[i][j];
+			}
+			System.out.println(confusionMatrix[i][i] / hangSum[i]);
+		}
+		System.out.println();
+	}
+
+	/**从分类结果文件中读取map
+	 * @param classifyResultFileNew 类目文件
+	 * @return Map<String, String> 由<文件名，类目名>保存的map
+	 * @throws IOException 
+	 */
+	private Map<String, String> getMapFromResultFile(
+			String classifyResultFileNew) throws IOException {
+		// TODO Auto-generated method stub
+		File crFile = new File(classifyResultFileNew);
+		FileReader crReader = new FileReader(crFile);
+		BufferedReader crBR = new BufferedReader(crReader);
+		Map<String, String> res = new TreeMap<String, String>();
+		String[] s;
+		String line;
+		while((line = crBR.readLine()) != null){
+			s = line.split(" ");
+			res.put(s[0], s[1]);	
+		}
+		return res;
+	}
+
+	/**
+	 * @param args
+	 * @throws Exception 
+	 */
+	public void NaiveBayesianClassifierMain(String[] args) throws Exception {
+		 //TODO Auto-generated method stub
+		//首先创建训练集和测试集
+		CreateTrainAndTestSample ctt = new CreateTrainAndTestSample();
+		NaiveBayesianClassifier nbClassifier = new NaiveBayesianClassifier();
+		ctt.filterSpecialWords();//根据包含非特征词的文档集生成只包含特征词的文档集到processedSampleOnlySpecial目录下
+		double[] accuracyOfEveryExp = new double[10];
+		double accuracyAvg,sum = 0;
+		for(int i = 0; i < 10; i++){//用交叉验证法做十次分类实验，对准确率取平均值	
+			String TrainDir = "F:/DataMiningSample/TrainSample"+i;
+			String TestDir = "F:/DataMiningSample/TestSample"+i;
+			String classifyRightCate = "F:/DataMiningSample/classifyRightCate"+i+".txt";
+			String classifyResultFileNew = "F:/DataMiningSample/classifyResultNew"+i+".txt";
+			ctt.createTestSamples("F:/DataMiningSample/processedSampleOnlySpecial", 0.9, i,classifyRightCate);
+			nbClassifier.doProcess(TrainDir,TestDir,classifyResultFileNew);
+			accuracyOfEveryExp[i] = nbClassifier.computeAccuracy (classifyRightCate, classifyResultFileNew);
+			System.out.println("The accuracy for Naive Bayesian Classifier in "+i+"th Exp is :" + accuracyOfEveryExp[i]);
+		}
+		for(int i = 0; i < 10; i++){
+			sum += accuracyOfEveryExp[i];
+		}
+		accuracyAvg = sum / 10;
+		System.out.println("The average accuracy for Naive Bayesian Classifier in all Exps is :" + accuracyAvg);
+		
+	}
+}2.7.4、朴素贝叶斯算法对newsgroup文档集做分类的结果    在经过一系列Newsgroup文档预处理、特征词的选取、及实现了贝叶斯算法之后，下面用朴素贝叶斯算法那对newsgroup文档集做分类，看看此贝叶斯算法的效果。    贝叶斯算法分类结果-混淆矩阵表示，以交叉验证的第6次实验结果为例，分类准确率最高达到80.47%。    程序运行硬件环境：Intel Core 2 Duo CPU T5750 2GHZ, 2G内存，实验结果如下：    取所有词共87554个作为特征词：10次交叉验证实验平均准确率78.19%，用时23min,准确率范围75.65%-80.47%，第6次实验准确率超过80%，取出现次数大于等于4次的词共计30095个作为特征词： 10次交叉验证实验平均准确率77.91%，用时22min，准确率范围75.51%-80.26%，第6次实验准确率超过80%。如下图所示：     结论：朴素贝叶斯算法不必去除出现次数很低的词，因为出现次数很低的词的IDF比较   大，去除后分类准确率下降，而计算时间并没有显著减少2.7.5、贝叶斯算法的改进    为了进一步提高贝叶斯算法的分类准确率，可以考虑优化特征词的选取策略；改进多项式模型的类条件概率的计算公式，改进为 类条件概率P(tk|c)=(类c下单词tk在各个文档中出现过的次数之和+0.001)/（类c下单词总数+训练样本中不重复特征词总数），分子当tk没有出现时，只加0.001(之前上面2.7.3节是+1)，这样更加精确的描述的词的统计分布规律，    做此改进后的混淆矩阵如下    可以看到第6次分组实验的准确率提高到84.79%，第7词分组实验的准确率达到85.24%，平均准确率由77.91%提高到了82.23%,优化效果还是很明显的。更多内容，请参考原文：参考文献条目8。谢谢。第三部分、从EM算法到隐马可夫模型（HMM）3.1、EM 算法与基于模型的聚类     在统计计算中，最大期望 （EM，Expectation–Maximization）算法是在概率（probabilistic）模型中寻找参数最大似然估计的算法，其中概率模型依赖于无法观测的隐藏变量（Latent Variabl）。最大期望经常用在机器学习和计算机视觉的数据集聚（Data Clustering）领域。    通常来说，聚类是一种无指导的机器学习问题，如此问题描述：给你一堆数据点，让你将它们最靠谱地分成一堆一堆的。聚类算法很多，不同的算法适应于不同的问题，这里仅介绍一个基于模型的聚类，该聚类算法对数据点的假设是，这些数据点分别是围绕 K 个核心的 K 个正态分布源所随机生成的，使用 Han JiaWei 的《Data Ming： Concepts and Techniques》中的图：    图中有两个正态分布核心，生成了大致两堆点。我们的聚类算法就是需要根据给出来的那些点，算出这两个正态分布的核心在什么位置，以及分布的参数是多少。这很明显又是一个贝叶斯问题，但这次不同的是，答案是连续的且有无穷多种可能性，更糟的是，只有当我们知道了哪些点属于同一个正态分布圈的时候才能够对这个分布的参数作出靠谱的预测，现在两堆点混在一块我们又不知道哪些点属于第一个正态分布，哪些属于第二个。反过来，只有当我们对分布的参数作出了靠谱的预测时候，才能知道到底哪些点属于第一个分布，那些点属于第二个分布。这就成了一个先有鸡还是先有蛋的问题了。为了解决这个循环依赖，总有一方要先打破僵局，说，不管了，我先随便整一个值出来，看你怎么变，然后我再根据你的变化调整我的变化，然后如此迭代着不断互相推导，最终收敛到一个解。这就是 EM 算法。    EM 的意思是“Expectation-Maximazation”，在这个聚类问题里面，我们是先随便猜一下这两个正态分布的参数：如核心在什么地方，方差是多少。然后计算出每个数据点更可能属于第一个还是第二个正态分布圈，这个是属于 Expectation 一步。有了每个数据点的归属，我们就可以根据属于第一个分布的数据点来重新评估第一个分布的参数（从蛋再回到鸡），这个是 Maximazation 。如此往复，直到参数基本不再发生变化为止。这个迭代收敛过程中的贝叶斯方法在第二步，根据数据点求分布的参数上面。3.2、隐马可夫模型（HMM）    大多的书籍或论文都讲不清楚这个隐马可夫模型(HMM)，包括未鹏兄之原文也讲得不够具体明白。接下来，我尽量用直白易懂的语言阐述这个模型。然在介绍隐马可夫模型之前，有必要先行介绍下单纯的马可夫模型(本节主要引用：统计自然语言处理，宗成庆编著一书上的相关内容)。3.2.1、马可夫模型    我们知道，随机过程又称随机函数，是随时间而随机变化的过程。马可夫模型便是描述了一类重要的随机过程。我们常常需要考察一个随机变量序列，这些随机变量并不是相互独立的(注意：理解这个非相互独立，即相互之间有千丝万缕的联系)。    如果此时，我也搞一大推状态方程式，恐怕我也很难逃脱越讲越复杂的怪圈了。所以，直接举例子吧，如，一段文字中名词、动词、形容词三类词性出现的情况可由三个状态的马尔科夫模型描述如下： 状态s1：名词 状态s2：动词 状态s3：形容词假设状态之间的转移矩阵如下：                                s1     s2    s3                        s1   0.3      0.5    0.2    A = [aij] =     s2   0.5      0.3    0.2                        s3   0.4      0.2     0.4    如果在该段文字中某一个句子的第一个词为名词，那么根据这一模型M，在该句子中这三类词出现顺序为O="名动形名”的概率为：    P(O|M)=P(s1，s2，s3，s1 | M) = P(s1) ×　P(s2 | s1) * P(s3 | s2)*P(s1 | s3)                =1* a12 * a23 * a31=0.5*0.2*0.4=0.004    马尔可夫模型又可视为随机的有限状态机。马尔柯夫链可以表示成状态图（转移弧上有概率的非确定的有限状态自动机），如下图所示，    在上图中，圆圈表示状态，状态之间的转移用带箭头的弧表示，弧上的数字为状态转移的概率，初始状态用标记为start的输入箭头表示，假设任何状态都可作为终止状态。图中零概率的转移弧省略，且每个节点上所有发出弧的概率之和等于1。从上图可以看出，马尔可夫模型可以看做是一个转移弧上有概率的非确定的有限状态自动机。3.2.2、隐马可夫模型(HMM)    在上文介绍的马可夫模型中，每个状态代表了一个可观察的事件，所以，马可夫模型有时又称作视马可夫模型(VMM)，这在某种程度上限制了模型的适应性。而在我们的隐马可夫模型(HMM)中，我们不知道模型所经过的状态序列，只知道状态的概率函数，也就是说，观察到的事件是状态的随机函数，因此改模型是一个双重的随机过程。其中，模型的状态转换是不可观察的，即隐蔽的，可观察事件的随机过程是隐蔽的状态过程的随机函数。        理论多说无益，接下来，留个思考题给读者：N 个袋子，每个袋子中有M 种不同颜色的球。一实验员根据某一概率分布选择一个袋子，然后根据袋子中不同颜色球的概率分布随机取出一个球，并报告该球的颜色。对局外人：可观察的过程是不同颜色球的序列，而袋子的序列是不可观察的。每只袋子对应HMM中的一个状态；球的颜色对应于HMM 中状态的输出。3.2.2、HMM在中文分词、机器翻译等方面的具体应用    隐马可夫模型在很多方面都有着具体的应用，如由于隐马可夫模型HMM提供了一个可以综合利用多种语言信息的统计框架，因此，我们完全可以讲汉语自动分词与词性标注统一考察，建立基于HMM的分词与词性标注的一体化系统。    根据上文对HMM的介绍，一个HMM通常可以看做由两部分组成：一个是状态转移模型，一个是状态到观察序列的生成模型。具体到中文分词这一问题中，可以把汉字串或句子S作为输入，单词串Sw为状态的输出，即观察序列，Sw=w1w2w3...wN(N>=1)，词性序列St为状态序列，每个词性标记ct对应HMM中的一个状态qi，Sc=c1c2c3...cn。    那么，利用HMM处理问题问题恰好对应于解决HMM的三个基本问题：估计模型的参数；对于一个给定的输入S及其可能的输出序列Sw和模型u=(A，B，*)，快速地计算P(Sw|u)，所有可能的Sw中使概率P(Sw|u)最大的解就是要找的分词效果；快速地选择最优的状态序列或词性序列，使其最好地解释观察序列。    除中文分词方面的应用之外，HMM还在统计机器翻译中有应用，如基于HMM的词对位模型，更多请参考：统计自然语言处理，宗成庆编著。    注：本文着重讲决策树分类和贝叶斯分类算法，后面的EM、HMM都是一笔带过，篇幅有限+懒，未能详尽阐述。日后，有机会，会再讲讲EM和HMM算法的。当然，你还可以先看看一个叫做HMM学习最佳范例的系列，原文写得好，翻译也翻译的精彩，推荐给大家：http://www.52nlp.cn/category/hidden-markov-model/page/4。参考文献及推荐阅读机器学习，Tom M.Mitchhell著；数据挖掘导论，[美] Pang-Ning Tan / Michael Steinbach / Vipin Kumar 著；数据挖掘领域十大经典算法初探；数学之美番外篇：平凡而又神奇的贝叶斯方法(本文第二部分、贝叶斯分类主要来自此文)。http://www.cnblogs.com/leoo2sk/archive/2010/09/19/decision-tree.html；数学之美：http://www.google.com.hk/ggblog/googlechinablog/2006/04/blog-post_2507.html；决策树ID3分类算法的C++实现 & yangliuy：http://blog.csdn.net/yangliuy/article/details/7322015；yangliuy，http://blog.csdn.net/yangliuy/article/details/7400984；统计自然语言处理，宗成庆编著(本文第三部分之HMM主要参考此书)；推荐引擎算法学习导论；支持向量机导论，[美] Nello Cristianini / John Shawe-Taylor 著；Porter算法，http://qinxuye.me/article/porter-stemmer/；漫谈Clustering之k-means：http://blog.pluskid.org/?p=17；HMM学习最佳范例：http://www.52nlp.cn/category/hidden-markov-model/page/4；朴素贝叶斯新闻分类器详解：http://www.sobuhu.com/archives/610；一堆 Wikipedia 条目，一堆 paper ，《机器学习与人工智能资源导引》。后记    研究了一年有余的数据结构方面的算法，现在可以逐渐转向应用方面(机器学习 & 数据挖掘)的算法学习了。OK，本文或本聚类 & 分类算法系列中任何一篇文章有任何问题，漏洞，或bug，欢迎任何读者随时不吝赐教 & 指正，感谢大家，谢谢。 同时，第二篇已基本完成：支持向量机通俗导论(理解SVM的三层境界)。    这些东西现在只是一个大致粗略的预览学习，以后若有机会，都会逐一更进一步深入(每一个分类方法或算法都足以写成一本书)。July、二零一二年五月二十八日晚十点。
+
+                作者：v_JULY_v 发表于2012-5-17 21:06:53 原文链接
+
+
+            阅读：99319 评论：149 查看评论

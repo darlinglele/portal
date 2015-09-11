@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load get_extras %}
+{%block main%}
+<div class="container-liquid">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="col-md-2 no-right-padding right-border">          
+          <div class="my-panel-group screen-height" id="accordion">                                
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <div class="panel-title" data-toggle="collapse" data-parent="#" href="#all-sites" style="cursor:hand">
+                <span class="glyphicon glyphicon-book"></span>  随笔分类
+                </div>
+              </div>
+              <div id="all-sites" class="panel-collapse collapse in">
+                <div class="panel-body">   
+                  <div class="item-list">
+                    {%for key,value in categories.items%}                  
+                      <div class="item"><a href="/note/category/{{key}}"> {{key}} </a>
+                      <span style="float:right" class="badge">{{value}}</span>
+                      </div>                      
+                    {%endfor%}                               
+                  </div>             
+                </div>
+              </div>
+            </div>   
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <div class="panel-title" data-toggle="collapse" data-parent="" href="#all-tags" style="cursor:hand">
+                <span class="glyphicon glyphicon-tags"></span>  随笔标签
+                </div>
+              </div>
+              <div id="all-tags" class="panel-collapse collapse in">
+                <div style="padding:10px" class="panel-body">
+                {%for item in tags%}
+                  <a style='font-size: {{item.count|add:"10" }}'  href="/note/tag/{{item.name}}"> {{item.name}}</a>
+                {%endfor%}
+                </div>
+              </div>
+            </div>   
+        </div>  <!--note end of my-panel-group --> 
+        </div>  <!-- end of col-md-3 -->
+        <div class="col-md-10 no-left-padding no-right-padding right-border ">                  
+     			 {%block note_main%}{%endblock%}        
+         </div>
+       </div><!-- end for row --> 
+      </div> 
+{%endblock%}

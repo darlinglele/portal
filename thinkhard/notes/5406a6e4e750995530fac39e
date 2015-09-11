@@ -1,0 +1,185 @@
+本文主要说明Java中继承与组合的概念，以及它们之间的联系与区别。首先文章会给出一小段代码示例，用于展示到底什么是继承。然后演示如何通过“组合”来改进这种继承的设计机制。最后总结这两者的应用场景，即到底应该选择继承还是组合。
+1、继承
+假设我们有一个名为Insect（昆虫）的类，这个类包含两个方法：1）移动move()； 2）攻击attack()。
+代码如下：
+class Insect {
+	private int size;
+	private String color;
+
+	public Insect(int size, String color) {
+		this.size = size;
+		this.color = color;
+	}
+
+	public int getSize() {
+		return size;
+	}
+
+	public void setSize(int size) {
+		this.size = size;
+	}
+
+	public String getColor() {
+		return color;
+	}
+
+	public void setColor(String color) {
+		this.color = color;
+	}
+
+	public void move() {
+		System.out.println("Move");
+	}
+
+	public void attack() {
+		move();  //假设昆虫在攻击前必须要先移动一次
+		System.out.println("Attack");
+	}
+}
+现在，你想要定义一个名为Bee（蜜蜂）的类。Bee（蜜蜂）是Insect（昆虫）的一种，但实现了不同于Insect（昆虫）的attack()和move方法。这时候我们可以用继承的设计机制来实现Bee类，就像下面的代码一样：
+class Bee extends Insect {
+	public Bee(int size, String color) {
+		super(size, color);
+	}
+
+	public void move() {
+		System.out.println("Fly");
+	}
+
+	public void attack() {
+		move();
+		super.attack();
+	}
+}
+public class InheritanceVSComposition {
+	public static void main(String[] args) {
+		Insect i = new Bee(1, "red");
+		i.attack();
+	}
+}
+InheritanceVSComposition作为一个测试类，在其main方法中生成了一个Bee类的实例，并赋值给Insect类型的引用变量 i。所以调用i的attack方法时，对应的是Bee类实例的attack方法，也就是调用了Bee类的attack方法。
+类的继承结构图如下，非常简单：
+
+输出：
+Fly
+Fly
+Attack
+Fly被打印了两次，也就是说move方法被调用了两次。但按理来讲，move方法只应当被调用一次，因为无论是昆虫还是蜜蜂，一次攻击前只移动一次。
+问题出在子类（即Bee类）的attack方法的重载代码中，也就是super.attack()这一句。因为在父类（即Insect类）中，调用 attack方法时会先调用move方法，所以当子类（Bee）调用super.attack()时，相当于也同时调用了被重载的move方法（注意是子 类被重载的move方法，而不是父类的move方法）。
+为了解决这个问题，我们可以采取以下办法：
+
+删除子类的attack方法。这么做会使得子类的attack方法的实现完全依赖于父类对于该方法的实现（因为子类继承了父类的attack方法）。如果 父类的attack方法不受控制而产生了变更。比如说，父类的attack方法中调用了另外的move方法，那么子类的attack方法也会产生相应的变 化，这是一种很糟糕的封装。
+也可以重写子类的attack方法，像下面这样：
+
+public void attack() {
+	move();
+	System.out.println("Attack");
+}
+这样保证了结果的正确性，因为子类的attack方法不再依赖于父类。但是，子类attack方法的代码与父类产生了重复（重复的attack方法会使得很多事情变得复杂，不仅仅是多打印了一条输出语句）。所以第二种办法也不行，它不符合软件工程中关于重用的思想。
+如此看来，继承机制是有缺点的：子类依赖于父类的实现细节，如果父类产生了变更，子类的后果将不堪设想。
+2、组合
+在上面的例子中，可以用组合的机制来替代继承。我们先看一下运用组合如何实现。
+attack这一功能不再是一个方法，而是被抽象为一个接口。
+interface Attack {
+	public void move();
+	public void attack();
+}
+通过对Attack接口的实现，就可以在实现类当中定义不同类型的attack。
+class AttackImpl implements Attack {
+	private String move;
+	private String attack;
+
+	public AttackImpl(String move, String attack) {
+		this.move = move;
+		this.attack = attack;
+	}
+
+	@Override
+	public void move() {
+		System.out.println(move);
+	}
+
+	@Override
+	public void attack() {
+		move();
+		System.out.println(attack);
+	}
+}
+因为attack功能已经被抽象为一个接口，所以Insect类不再需要有attack方法。
+class Insect {
+	private int size;
+	private String color;
+
+	public Insect(int size, String color) {
+		this.size = size;
+		this.color = color;
+	}
+
+	public int getSize() {
+		return size;
+	}
+
+	public void setSize(int size) {
+		this.size = size;
+	}
+
+	public String getColor() {
+		return color;
+	}
+
+	public void setColor(String color) {
+		this.color = color;
+	}
+}
+Bee类一种Insect类，它具有attack的功能，所以它实现了attack接口：
+// 这个封装类封装了一个Attack类型的对象
+class Bee extends Insect implements Attack {
+	private Attack attack;
+
+	public Bee(int size, String color, Attack attack) {
+		super(size, color);
+		this.attack = attack;
+	}
+
+	public void move() {
+		attack.move();
+	}
+
+	public void attack() {
+		attack.attack();
+	}
+}
+类图：
+
+测试类代码，将AttackImpl的实例作为Attack类型的参数传给Bee类的构造函数：
+public class InheritanceVSComposition2 {
+	public static void main(String[] args) {
+		Bee a = new Bee(1, "black", new AttackImpl("fly", "move"));
+		a.attack();
+
+		// if you need another implementation of move()
+		// there is no need to change Insect, we can quickly use new method to attack
+
+		Bee b = new Bee(1, "black", new AttackImpl("fly", "sting"));
+		b.attack();
+	}
+}
+fly
+move
+fly
+sting
+3、什么时候该用继承，什么时候该用组合？
+以下两条原则说明了应该如何选择继承与组合：
+
+如果存在一种IS-A的关系（比如Bee“是一个”Insect），并且一个类需要向另一个类暴露所有的方法接口，那么更应该用继承的机制。
+如果存在一种HAS-A的关系（比如Bee“有一个”attack功能），那么更应该运用组合。
+
+总结来说，继承和组合都有他们的用处。只有充分理解各对象和功能之间的关系，才能充分发挥这两种机制各自的优点。
+参考：
+
+  Bloch, Joshua. Effective Java. Pearson Education India, 2008.
+  http://stackoverflow.com/questions/49002/prefer-composition-over-inheritance
+  http://www.javaworld.com/article/2076814/core-java/inheritance-versus-composition–which-one-should-you-choose-.html
+
+ 
+可能感兴趣的文章配置一个好用的Android模拟器常见Java面试题 – 第四部分：迭代（iteration）和递归（recursion）Eclipse Orion 2.0发布JAX-RS 2.0 REST客户端编程实例10个有关String的面试问题JVM最简生存指南Java 7：如何正确关闭NIO.2文件通道Java中如何克隆集合——ArrayList和HashSet深拷贝如何高效地判断数组中是否包含某特定值Oracle发布Java9功能列表

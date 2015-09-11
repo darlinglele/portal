@@ -1,0 +1,212 @@
+最近要整理一下课程图谱里的中文课程，需要处理中文，首当其冲的便是中文分词的问题。目前有一些开源的或者商用的中文分词器可供选择，但是出于探索或者好奇心的目的，想亲手打造一套实用的中文分词器，满足实际的需求。这些年无论是学习的时候还是工作的时候，林林总总的接触了很多实用的中文分词器，甚至在这里也写过一些Toy级别的中文分词相关文章，但是没有亲手打造过自己的分词器，甚为遗憾。目前自己处于能自由安排工作的阶段，所以第一步就是想从中文信息处理的桥头堡“中文分词”入手，打造一个实用的中文分词器，当然，首先面向的对象是课程图谱所在的教育领域。
+大概4年前，这里写了两篇关于字标注中文分词的文章：中文分词入门之字标注法，文中用2-tag（B，I）进行说明并套用开源的HMM词性标注工具Citar（A simple Trigram HMM part-of-speech tagger）做了演示，虽然分词效果不太理想，但是能抛砖引玉，也算是有点用处。这次捡起中文分词，首先想到的依然是字标注分词方法，在回顾了一遍黄昌宁老师和赵海博士在07年第3期《中文信息学报》上发表的《中文分词十年回顾》后，决定这次从4-tag入手，并且探索一下最大熵模型和条件随机场（CRF）在中文分词字标注方法上的威力。这方面的文献大家可参考张开旭博士维护的“中文分词文献列表”。这里主要基于已有文献的思路和现成的开源工具做一些验证，包括张乐博士的最大熵模型工具包(Maximum Entropy Modeling Toolkit for Python and C++)和条件随机场的经典工具包CRF++(CRF++: Yet Another CRF toolkit)。
+这个系列也将补充两篇文章，一篇简单介绍背景知识并介绍如何利用现成的最大熵模型工具包来做中文分词，另外一篇介绍如何用CRF++做字标注分词，同时基于CRF++的python接口提供一份简单的 CRF Python 分词代码，仅供大家参考。至于最大熵和CRF++的背景知识，这里不会过多涉及，推荐大家跟踪一下课程图谱上相关的机器学习公开课。
+这次使用的中文分词资源依然是SIGHAN提供的backoff 2005语料，目前封闭测试最好的结果是4-tag+CFR标注分词，在北大语料库上可以在准确率，召回率以及F值上达到92%以上的效果，在微软语料库上可以到达96%以上的效果。不清楚这份中文分词资源的同学可参考很早之前写的这篇文章：中文分词入门之资源。以下我们将转入这篇文章的主题，基于最大熵模型的字标注中文分词。
+
+首先仍然是下载安装和使用张乐博士的最大熵模型工具包，这次使用的是其在github上的代码：maxent , 进入到代码主目录maxent-master后，正常按照configure，make 及 make install就可以完成C++库的安装，再进入到子目录python下，执行python setup.py install即可，这个python库是通过强大的SWIG生成的。关于这个最大熵模型工具包详情及背景，推荐看官方manual文档，写得非常详细。与“中文分词入门之字标注法2”的做法类似，这里利用这个工具包example里带的英文词性标注脚本来做字标注中文分词，先验证一下是否可行，关于这个case的解读，可以参考manual文档里的“4.6 Case Study: Building a maxent Part-of-Speech Tagger”。
+第一步仍然是将backoff2005里的训练数据转化为这个POS Tagger所需的训练数据格式，还是以微软亚洲研究院提供的中文分词语料为例，这次我们采用4-tag(B(Begin，词首), E(End，词尾), M(Middle，词中), S(Single,单字词))标记集，只处理utf-8编码文本。原始训练集./icwb2-data/training/msr_training.utf8的形式是人工分好词的中文句子形式，如：
+12345678910“  人们  常  说  生活  是  一  部  教科书  ，  而  血  与  火  的  战争  >      更  是  不可多得  的  教科书  ，  她  确实  是  名副其实  的  ‘  我  的  >      大学  ’  。
+“  心  静  渐  知  春  似  海  ，  花  深  每  觉  影  生  香  。
+“  吃  屎  的  东西  ，  连  一  捆  麦  也  铡  不  动  呀  ？
+他  “  严格要求  自己  ，  从  一个  科举  出身  的  进士  成为  一个  伟>      大  的  民主主义  者  ，  进而  成为  一  位  杰出  的  党外  共产主义  战 士  ，  献身  于  崇高  的  共产主义  事业  。
+“  征  而  未  用  的  耕地  和  有  收益  的  土地  ，  不准  荒芜  。
+“  这  首先  是  个  民族  问题  ，  民族  的  感情  问题  。
+’  我  扔  了  两颗  手榴弹  ，  他  一下子  出  溜  下去  。
+“  废除  先前  存在  的  所有制  关系  ，  并不是  共产主义  所  独具  的        特征  。
+“  这个  案子  从  始  至今  我们  都  没有  跟  法官  接触  过  ，  也  >      没有  跟  原告  、  被告  接触  过  。
+“  你  只有  把  事情  做好  ，  大伙  才  服  你  。
+这里我们提供一个4-tag的标注脚本 character_tagging.py 对这个训练语料进行标注：
+12345678910111213141516171819202122232425262728293031323334#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Author: 52nlpcn@gmail.com
+# Copyright 2014 @ YuZhen Technology
+#
+# 4 tags for character tagging: B(Begin), E(End), M(Middle), S(Single)
+
+import codecs
+import sys
+
+def character_tagging(input_file, output_file):
+    input_data = codecs.open(input_file, 'r', 'utf-8')
+    output_data = codecs.open(output_file, 'w', 'utf-8')
+    for line in input_data.readlines():
+        word_list = line.strip().split()
+        for word in word_list:
+            if len(word) == 1:
+                output_data.write(word + "/S ")
+            else:
+                output_data.write(word[0] + "/B ")
+                for w in word[1:len(word)-1]:
+                    output_data.write(w + "/M ")
+                output_data.write(word[len(word)-1] + "/E ")
+        output_data.write("\n")
+    input_data.close()
+    output_data.close()
+
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        print "Please use: python character_tagging.py input output"
+        sys.exit()
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+    character_tagging(input_file, output_file)
+只需执行“python character_tagging.py icwb2-data/training/msr_training.utf8 msr_training.tagging.utf8” 即可得到最大熵词性标注训练器所需要的输入文件msr_training.tagging.utf8，样例如下：
+12345678910“/S 人/B 们/E 常/S 说/S 生/B 活/E 是/S 一/S 部/S 教/B 科/M 书/E ，/S 而/S 血/S 与/S 火/S 的/S 战/B 争/E 更/S 是/S 不/B 可/M 多/M 得/E 的/S 教/B 科/M 书/E ，/S 她/S 确/B 实/E 是/S 名/B 副/M 其/M 实/E 的/S ‘/S 我/S 的/S 大/B 学/E ’/S 。/S 
+“/S 心/S 静/S 渐/S 知/S 春/S 似/S 海/S ，/S 花/S 深/S 每/S 觉/S 影/S 生/S 香/S 。/S 
+“/S 吃/S 屎/S 的/S 东/B 西/E ，/S 连/S 一/S 捆/S 麦/S 也/S 铡/S 不/S 动/S 呀/S ？/S 
+他/S “/S 严/B 格/M 要/M 求/E 自/B 己/E ，/S 从/S 一/B 个/E 科/B 举/E 出/B 身/E 的/S 进/B 士/E 成/B 为/E 一/B 个/E 伟/B 大/E 的/S 民/B 主/M 主/M 义/E 者/S ，/S 进/B 而/E 成/B 为/E 一/S 位/S 杰/B 出/E 的/S 党/B 外/E 共/B 产/M 主/M 义/E 战/B 士/E ，/S 献/B 身/E 于/S 崇/B 高/E 的/S 共/B 产/M 主/M 义/E 事/B 业/E 。/S 
+“/S 征/S 而/S 未/S 用/S 的/S 耕/B 地/E 和/S 有/S 收/B 益/E 的/S 土/B 地/E ，/S 不/B 准/E 荒/B 芜/E 。/S 
+“/S 这/S 首/B 先/E 是/S 个/S 民/B 族/E 问/B 题/E ，/S 民/B 族/E 的/S 感/B 情/E 问/B 题/E 。/S 
+’/S 我/S 扔/S 了/S 两/B 颗/E 手/B 榴/M 弹/E ，/S 他/S 一/B 下/M 子/E 出/S 溜/S 下/B 去/E 。/S 
+“/S 废/B 除/E 先/B 前/E 存/B 在/E 的/S 所/B 有/M 制/E 关/B 系/E ，/S 并/B 不/M 是/E 共/B 产/M 主/M 义/E 所/S 独/B 具/E 的/S 特/B 征/E 。/S 
+“/S 这/B 个/E 案/B 子/E 从/S 始/S 至/B 今/E 我/B 们/E 都/S 没/B 有/E 跟/S 法/B 官/E 接/B 触/E 过/S ，/S 也/S 没/B 有/E 跟/S 原/B 告/E 、/S 被/B 告/E 接/B 触/E 过/S 。/S 
+“/S 你/S 只/B 有/E 把/S 事/B 情/E 做/B 好/E ，/S 大/B 伙/E 才/S 服/S 你/S 。/S
+现在就可以用张乐博士最大熵模型工具包中自带的PosTagger来训练一个字标注器了：
+./maxent-master/example/postagger/postrainer.py msr_tagger.model -f msr_training.tagging.utf8 –iters 100
+这里指定迭代训练100轮，没有什么依据，仅作此次测试之用，训练结束之后，我们得到一个字标注所用的最大熵模型: msr_tagger.model，还有几个副产品。现在我们需要做得是准备一份测试语料，然后利用最大熵模型标注器对测试语料进行标注。原始的测试语料是icwb2-data/testing/msr_test.utf8 ，样例如下：
+12345678910扬帆远东做与中国合作的先行
+希腊的经济结构较特殊。
+海运业雄踞全球之首，按吨位计占世界总数的１７％。
+另外旅游、侨汇也是经济收入的重要组成部分，制造业规模相对较小。
+多年来，中希贸易始终处于较低的水平，希腊几乎没有在中国投资。
+十几年来，改革开放的中国经济高速发展，远东在崛起。
+瓦西里斯的船只中有４０％驶向远东，每个月几乎都有两三条船停靠中国港口。
+他感受到了中国经济发展的大潮。
+他要与中国人合作。
+他来到中国，成为第一个访华的大船主。
+需要将其单字离散化并添加空格，便于标注，这里我们同样提供一个python脚本 character_split.py 对测试语料进行处理：
+123456789101112131415161718192021222324252627#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Author: 52nlpcn@gmail.com
+# Copyright 2014 @ YuZhen Technology
+#
+# split chinese characters and add space between them
+
+import codecs
+import sys
+
+def character_split(input_file, output_file):
+    input_data = codecs.open(input_file, 'r', 'utf-8')
+    output_data = codecs.open(output_file, 'w', 'utf-8')
+    for line in input_data.readlines():
+        for word in line.strip():
+            output_data.write(word + " ")
+        output_data.write("\n")
+    input_data.close()
+    output_data.close()
+
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        print "Please use: python character_split.py input output"
+        sys.exit()
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+    character_split(input_file, output_file)
+执行“python character_split.py icwb2-data/testing/msr_test.utf8 msr_test.split.utf8”即可得到可用于标注测试的测试语料 msr_test.split.utf8，样例如下：
+12345678910扬 帆 远 东 做 与 中 国 合 作 的 先 行 
+希 腊 的 经 济 结 构 较 特 殊 。 
+海 运 业 雄 踞 全 球 之 首 ， 按 吨 位 计 占 世 界 总 数 的 １ ７ ％ 。 
+另 外 旅 游 、 侨 汇 也 是 经 济 收 入 的 重 要 组 成 部 分 ， 制 造 业 规 模 相 对 较 小 。 
+多 年 来 ， 中 希 贸 易 始 终 处 于 较 低 的 水 平 ， 希 腊 几 乎 没 有 在 中 国 投 资 。 
+十 几 年 来 ， 改 革 开 放 的 中 国 经 济 高 速 发 展 ， 远 东 在 崛 起 。 
+瓦 西 里 斯 的 船 只 中 有 ４ ０ ％ 驶 向 远 东 ， 每 个 月 几 乎 都 有 两 三 条 船 停 靠 中 国 港 口 。 
+他 感 受 到 了 中 国 经 济 发 展 的 大 潮 。 
+他 要 与 中 国 人 合 作 。 
+他 来 到 中 国 ， 成 为 第 一 个 访 华 的 大 船 主 。
+现在执行最大熵标注脚本即可得到字标注结果：
+./maxent-master/example/postagger/maxent_tagger.py -m msr_tagger.model msr_test.split.utf8 > msr_test.split.tag.utf8
+msr_test.split.tag.utf8即是标注结果，样例如下：
+12345678910扬/B 帆/M 远/M 东/M 做/E 与/S 中/B 国/E 合/B 作/E 的/S 先/B 行/E 
+希/B 腊/E 的/S 经/B 济/E 结/B 构/E 较/S 特/B 殊/E 。/S 
+海/B 运/M 业/E 雄/B 踞/E 全/B 球/E 之/S 首/S ，/S 按/S 吨/B 位/E 计/B 占/E 世/B 界/E 总/B 数/E 的/S １/B ７/M ％/E 。/S 
+另/B 外/E 旅/B 游/E 、/S 侨/B 汇/E 也/B 是/E 经/B 济/E 收/B 入/E 的/S 重/B 要/E 组/B 成/M 部/M 分/E ，/S 制/B 造/M 业/E 规/B 模/E 相/B 对/E 较/B 小/E 。/S 
+多/B 年/E 来/S ，/S 中/S 希/S 贸/B 易/E 始/B 终/E 处/B 于/E 较/B 低/E 的/S 水/B 平/E ，/S 希/B 腊/E 几/B 乎/E 没/B 有/E 在/S 中/B 国/E 投/B 资/E 。/S 
+十/B 几/M 年/E 来/S ，/S 改/B 革/M 开/M 放/E 的/S 中/B 国/E 经/B 济/E 高/B 速/E 发/B 展/E ，/S 远/B 东/E 在/S 崛/B 起/E 。/S 
+瓦/B 西/M 里/M 斯/E 的/S 船/B 只/E 中/S 有/S ４/B ０/M ％/E 驶/S 向/S 远/B 东/E ，/S 每/B 个/M 月/E 几/B 乎/E 都/S 有/S 两/S 三/S 条/S 船/S 停/S 靠/S 中/B 国/M 港/M 口/E 。/S 
+他/S 感/B 受/E 到/S 了/S 中/B 国/E 经/B 济/E 发/B 展/E 的/S 大/B 潮/E 。/S 
+他/S 要/S 与/S 中/B 国/M 人/M 合/M 作/E 。/S 
+他/S 来/B 到/E 中/B 国/E ，/S 成/B 为/E 第/B 一/M 个/E 访/B 华/E 的/S 大/B 船/M 主/E 。/S
+最后我们还需要一个脚本，按标注的词位信息讲这份结果再转化为分词结果，这里我们仍然提供一个转换脚本 character_2_word.py：
+123456789101112131415161718192021222324252627282930313233343536373839#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Author: 52nlpcn@gmail.com
+# Copyright 2014 @ YuZhen Technology
+#
+# Combining characters based the 4-tag tagging info
+
+import codecs
+import sys
+
+def character_2_word(input_file, output_file):
+    input_data = codecs.open(input_file, 'r', 'utf-8')
+    output_data = codecs.open(output_file, 'w', 'utf-8')
+    # 4 tags for character tagging: B(Begin), E(End), M(Middle), S(Single)
+    for line in input_data.readlines():
+        char_tag_list = line.strip().split()
+        for char_tag in char_tag_list:
+            char_tag_pair = char_tag.split('/')
+            char = char_tag_pair[0]
+            tag = char_tag_pair[1]
+            if tag == 'B':
+                output_data.write(' ' + char)
+            elif tag == 'M':
+                output_data.write(char)
+            elif tag == 'E':
+                output_data.write(char + ' ')
+            else: # tag == 'S'
+                output_data.write(' ' + char + ' ')
+        output_data.write("\n")
+    input_data.close()
+    output_data.close()
+
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        print "Please use: python character_2_word.py input output"
+        sys.exit()
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+    character_2_word(input_file, output_file)
+执行 “python character_2_word.py msr_test.split.tag.utf8 msr_test.split.tag2word.utf8” 即可得到合并后的分词结果msr_test.split.tag2word.utf8，样例如下：
+12345678910 扬帆远东做  与  中国  合作  的  先行 
+ 希腊  的  经济  结构  较  特殊  。 
+ 海运业  雄踞  全球  之  首  ，  按  吨位  计占  世界  总数  的  １７％  。 
+ 另外  旅游  、  侨汇  也是  经济  收入  的  重要  组成部分  ，  制造业  规模  相对  较小  。 
+ 多年  来  ，  中  希  贸易  始终  处于  较低  的  水平  ，  希腊  几乎  没有  在  中国  投资  。 
+ 十几年  来  ，  改革开放  的  中国  经济  高速  发展  ，  远东  在  崛起  。 
+ 瓦西里斯  的  船只  中  有  ４０％  驶  向  远东  ，  每个月  几乎  都  有  两  三  条  船  停  靠  中国港口  。 
+ 他  感受  到  了  中国  经济  发展  的  大潮  。 
+ 他  要  与  中国人合作  。 
+ 他  来到  中国  ，  成为  第一个  访华  的  大船主  。
+有了这个字标注分词结果，我们就可以利用backoff2005的测试脚本来测一下这次分词的效果了：
+./icwb2-data/scripts/score ./icwb2-data/gold/msr_training_words.utf8 ./icwb2-data/gold/msr_test_gold.utf8 msr_test.split.tag2word.utf8 > msr_maxent_segment.score
+结果如下：
+=== SUMMARY:
+=== TOTAL INSERTIONS:	5343
+=== TOTAL DELETIONS:	4549
+=== TOTAL SUBSTITUTIONS:	12661
+=== TOTAL NCHANGE:	22553
+=== TOTAL TRUE WORD COUNT:	106873
+=== TOTAL TEST WORD COUNT:	107667
+=== TOTAL TRUE WORDS RECALL:	0.839
+=== TOTAL TEST WORDS PRECISION:	0.833
+=== F MEASURE:	0.836
+=== OOV Rate:	0.026
+=== OOV Recall Rate:	0.565
+=== IV Recall Rate:	0.846
+###	msr_test.split.tag2word.utf8	5343	4549	12661	22553	106873	107667	0.839	0.833	0.836	0.026	0.565	0.846
+这个分词结果也比较一般，不过还有很多可以优化的地方，不过最主要的还是要设计适合中文分词字标注的特征模板，而这里使用的这份词性标注代码在抽取特征的时候主要考虑的是英文词性标注，所以我们完全可以基于一些已有的最大熵字标志文章来设计特征模板，进行特征提取和优化，不过这份工作就留给读者朋友了。下一篇文章我们直接进入CRF字标注分词, 大家将可以看到如何利用CRF++现有的工作，在封闭的微软语料库上训练一个准确率，召回率以及F值可以达到96%的中文分词器。
+注：原创文章，转载请注明出处“我爱自然语言处理”：www.52nlp.cn
+本文链接地址：http://www.52nlp.cn/中文分词入门之字标注法3
+
+相关文章:
+中文分词入门之字标注法4 
+中文分词入门之字标注法2 
+Itenyh版-用HMM做中文分词四：A Pure-HMM 分词器 
+中文分词入门之资源 
+中文分词入门之最大匹配法扩展2 
+Beautiful Data-统计语言模型的应用三：分词3 
+Beautiful Data-统计语言模型的应用三：分词6 
+中文分词入门之字标注法1 
+Beautiful Data-统计语言模型的应用三：分词7 
+初学者报到: 实现了一个最大匹配的分词算法 
+

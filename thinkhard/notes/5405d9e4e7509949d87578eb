@@ -1,0 +1,18 @@
+Typoglycemia是个新词，描述的是人们识别一段文本时的一个有趣的现象：只要每个单词的首尾字母正确，中间的字母顺序完全打乱也没有关系，照样可以正常理解。例如这么一段文字：
+I cdnuol't blveiee taht I cluod aulaclty uesdnatnrd waht I was rdanieg: the phaonmneel pweor of the hmuan mnid. Aoccdrnig to a rseearch taem at Cmabrigde Uinervtisy, it deosn't mttaer in waht oredr the ltteers in a wrod are, the olny iprmoatnt tihng is taht the frist and lsat ltteer be in the rghit pclae. The rset can be a taotl mses and you can sitll raed it wouthit a porbelm. Tihs is bcuseae the huamn mnid deos not raed ervey lteter by istlef, but the wrod as a wlohe. Scuh a cdonition is arppoiatrely cllaed Typoglycemia.
+Amzanig huh? Yaeh and you awlyas thguoht slpeling was ipmorantt.
+我们其实可以较为轻松地识别出其原文：
+I couldn't believe that I could actually understand what I was reading: the phenomenal power of the human mind. According to a research team at Cambridge University, it doesn't matter in what order the letters in a word are, the only important thing is that the first and last letter be in the right place. The rest can be a total mess and you can still read it without a problem. This is because the human mind does not read every letter by itself, but the word as a whole. Such a condition is appropriately called Typoglycemia.
+Amazing, huh? Yeah and you always thought spelling was important.
+事实上中文也有类似的性质，文字序乱是不响影正阅常读的。
+那么我们可以如何从一段正确的文本（下方）生成一段Typoglycemia文本（上方）呢？这其实是我今天出的一道面试题，简单地说就是要求实现这么一个方法：
+string MakeTypoglycemia(string text); 
+规则很简单：
+
+保持所有非字母的字符位置不变。
+保持单词首尾字母不变，中间字符打乱。
+
+所谓”打乱“，可以随意从网上找一段数组乱序的算法即可，无需保证一定改变（例如某些除去头尾只有两个字母的单词，偶尔保留不变问题也不大）或者每个字符都不在原来的位置上。不过，我们假设这段代码会被大量调用，因此希望可以尽可能地效率高些，内存使用少些。
+要不您也来试下？这题我建议使用C#或Java来实现，因为这两个环境里的内存分配行为比较容易判断。当然您用Ruby，Python或JavaScript等语言问题也不大，效率容易判断，但内存分配方便可能就比较难计较了。
+其实这题还有后续，那就是把目标反一反：从一个前后确定中间乱序的单词，找到其原始的，正确的单词。自然，我们会得到一个长长的单词列表，十万个单词吧，并保证没有两个单词仅仅是中间几个字符的顺序不同。那么，您会如何设计一个数据结构，让我们可以快速的从一个乱序后的单词找到其正确形式呢？
+不过还是那句话：一定要写下代码来，否则思路不谈也罢。

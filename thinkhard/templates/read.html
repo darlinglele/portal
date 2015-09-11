@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{%block head%}
+<title>阅读--Thinkhard</title>
+<style type="text/css">  
+  #toolbar {
+    padding:0 0 2 15px;    
+    border-bottom:1px solid #ebebed;
+  }
+</style>
+{%endblock%}
+{%block main%}    
+    <div class="container-liquid">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="col-md-2 no-right-padding right-border">          
+          <div class="my-panel-group screen-height" id="accordion">                    
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <div class="panel-title" data-toggle="collapse" data-parent="" href="#all-cates" style="cursor:hand">
+               <span class='glyphicon glyphicon-cloud'></span> 订阅分类
+                </div>
+              </div>
+              <div id="all-cates" class="panel-collapse collapse in">
+                <div class="panel-body">
+                  {% for cate in cates %}  
+                      <a class='item-link' id="{{cate.category}}">{{cate.category}}</a>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>   
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <div class="panel-title" data-toggle="collapse" data-parent="" href="#all-sites" style="cursor:hand">
+               <span class='glyphicon glyphicon-list'></span> 所有订阅
+                </div>
+              </div>
+              <div id="all-sites" class="panel-collapse collapse in">
+                <div class="panel-body">
+                  {% for site in sites %}  
+                      <a class='item-link' id="{{site.title}}">{{site.title}}</a>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>   
+        </div>  <!-- end of my-panel-group --> 
+        </div>  <!-- end of col-md-3 -->
+        <div class="col-md-10 no-left-padding no-right-padding right-border ">                              
+              <div id='toolbar'> 
+<!--               <span class="glyphicon glyphicon-heart"></span> -->
+                
+                  <ol class="breadcrumb" style="padding:0 0 0 10px; margin:0px">
+                    <li><span class="glyphicon glyphicon-home"></span></li>
+                    <li><a href="/">首页</a></li>
+                    <li><a href="/read/">阅读</a></li>
+
+                  </ol>                     
+                <!-- <div class="btn-group" style="text-align:center">
+
+                  <button id='btn-return' type="button" class="btn btn-default" >返   回</button>
+                </div>
+                <div class="btn-group">
+                  <button id='all' type="button" class="btn btn-default">所 有</button>
+                  <button id='unread' type="button" class="btn btn-default">未 读</button>
+                  <button id='read' type="button" class="btn btn-default">已 读</button>
+                  <button id='star' type="button" class="btn btn-default">喜 欢</button>
+                </div>             -->
+            </div>         
+
+            <div style="padding-top:43px;" class="screen-height">
+              <div class="item-list">
+                <img src="{% static 'images/jia.gif' %}">
+              </div>
+              <div class="item-detail"></div>               
+            </div>
+         </div>
+       </div>
+      </div> <!-- end for row -->    
+{%endblock%}
+{%block script%}
+<!-- common script after document loaded -->
+<script type="text/javascript">             
+      var breadcrumb_template = $('#toolbar').html();
+      // breadcrumb.children().last().remove();
+      // $('#toolbar').empty().append(breadcrumb);
+
+      var showdetail =function(query){  
+          $.ajax({
+                  url: "/api/"+ query,
+                  context: document.body
+                }).done(function(data){
+                  $('.item-list').hide();
+                  $('.item-detail').show();         
+                  $('.item-detail').empty();
+                  $('.item-detail').append($(data));        
+                });               
+      }
+
+
+      var showlist = function(obj,field) {            
+           $.ajax({
+                  url: "/get_items/"+field+"/"+ obj.id,
+                  context: document.body
+                }).done(function(data){
+                  $('#toolbar').empty().append($(breadcrumb_template));
+                  var new_item = $('<li style="cursor:hand">').append($('<a>', {text: obj.innerText}));
+                  
+                  new_item.bind('click',function(){                            
+                    $('.item-detail').hide();
+                    $('.item-list').show();            
+                  });
+
+                  $('.breadcrumb').append(new_item);                  
+                  $('.item-detail').hide();
+                  $('.item-list').empty();
+                  $('.item-list').append($(data));
+                  $('.item-list').show();
+                  bindevent();                  
+               });                                                     
+      }
+
+      var bindevent = function() {
+            //event handler for items click
+            $('.item').unbind('click').bind('click',function(){
+                $('.item-selected').removeClass('item-selected');                    
+                $(this).addClass('item-selected');
+                $(this).removeClass('item-unread').addClass('item-read');                   
+                showdetail(this.id);
+            });
+
+            //event handler for categories
+            $('#all-cates .item-link').unbind('click').bind('click',function(){ 
+              showlist(this,'category');                          
+             });
+            //event handler for sites
+            $('#all-sites .item-link').unbind('click').bind('click',function(){ 
+              showlist(this,'site');                          
+             });
+
+            //toolbar event handler
+            $('#toolbar button').unbind('click').bind('click',function(){ 
+              showlist(this,'type');                          
+             });
+                          
+              $('.item-detail').hide();
+              $('.item-list').show();            
+            
+          }
+      
+           
+      showlist({'id':'all','innerText':'所有'},'type');      
+    </script>    
+{%endblock%}

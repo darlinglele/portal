@@ -1,0 +1,102 @@
+上一篇文章里我谈了C#中“显示实现接口事件”的限制（不过似乎有点打歪了），这一篇我们换个话题，再来谈泛型方面的限制。相对于Java的假泛型（编译型泛型，类型擦除）来说，真泛型是.NET的一个亮点。Anders Heisenberg多次提到.NET的真泛型有利于编程语言的进一步发展，可以带来更丰富的编程模型。不过.NET支持的泛型是一方面，具体到语言本身则又涉及到编译器的实现，而编译器的实现又收到运行时的限制等等，所以要谈语言的设计缺陷的“原因”就会变得很复杂。不过这里我们就把C#作为一个“成品”来对待，谈下它不允许以void作为泛型参数的“后果”，“原因”则略为一提，不做深究。
+泛型的限制
+话说C#中泛型是很常用的特性，很多朋友都应该遇到过一些这方面令您不爽的地方。例如，为什么在定义泛型成员的时候，泛型参数T不能限制为Enum（枚举）或Delegate（委托）；还有例如，为什么可以限制T存在没有参数的构造函数，但为什么不能指定它有特定参数的构造函数呢？其实很多时候并非是这么做没价值或者做不到，而是如Eric Lippert（咦，怎么老是你）在被问及为什么不支持Enum限制时提到的那样：
+
+As I'm fond of pointing out, ALL features are unimplemented until someone designs, specs, implements, tests, documents and ships the feature. So far, no one has done that for this one. There's no particularly unusual reason why not; we have lots of other things to do, limited budgets, and this one has never made it past the "wouldn't this be nice?" discussion in the language design team.
+I can see that there are a few decent usage cases, but none of them are so compelling that we'd do this work rather than one of the hundreds of other features that are much more frequently requested, or have more compelling and farther-reaching usage cases. (If we're going to muck with this code, I'd personally prioritize delegate constraints way, way above enum constraints.)
+
+总而言之就是：“有更重要的事情要做啦！”所以我在上一篇文章里也谈过，有些东西虽说可能只是小改动，但可能也再也不会实现了。
+void不能作为泛型参数
+不过有些问题的确只是些容易绕过的小问题，但我这次要谈的问题造成的麻烦则要大得多：您有没有试过使用void作为泛型类型？有没有想过，假如可以使用void作为泛型参数，会对开发有什么影响？
+首先，我们就不需要Func和Action两套委托类型了，因为Func<T1, T2, ..., TN, void>已经能够代替Action<T1, T2, ..., TN>。然后更进一步，很多API就无需写“两套”了——不过真的只要写两套吗？且看Task和Task<TResult>两个类型的ContinueWith重载吧：
+class Task
+{
+    Task ContinueWith(Action<Task>);
+    Task<TResult> ContinueWith<TResult>(Func<Task, TResult>);
+    Task ContinueWith(Action<Task>, CancellationToken);
+    Task ContinueWith(Action<Task>, TaskContinuationOptions);
+    Task ContinueWith(Action<Task>, TaskScheduler);
+    Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, CancellationToken);
+    Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, TaskContinuationOptions);
+    Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, TaskScheduler);
+    Task ContinueWith(Action<Task>, CancellationToken, TaskContinuationOptions, TaskScheduler);
+    Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, CancellationToken, TaskContinuationOptions, TaskScheduler);
+}
+
+public class Task<TResult> : Task
+{
+    Task ContinueWith(Action<Task<TResult>>);
+    Task<TNewResult> ContinueWith<TNewResult>(Func<Task<TResult>, TNewResult>);
+    Task ContinueWith(Action<Task<TResult>>, CancellationToken);
+    Task ContinueWith(Action<Task<TResult>>, TaskContinuationOptions);
+    Task ContinueWith(Action<Task<TResult>>, TaskScheduler);
+    Task<TNewResult> ContinueWith<TNewResult>(Func<Task<TResult>, TNewResult>, CancellationToken);
+    Task<TNewResult> ContinueWith<TNewResult>(Func<Task<TResult>, TNewResult>, TaskContinuationOptions);
+    Task<TNewResult> ContinueWith<TNewResult>(Func<Task<TResult>, TNewResult>, TaskScheduler);
+    Task ContinueWith(Action<Task<TResult>>, CancellationToken, TaskContinuationOptions, TaskScheduler);
+    Task<TNewResult> ContinueWith<TNewResult>(Func<Task<TResult>, TNewResult>, CancellationToken, TaskContinuationOptions, TaskScheduler);
+}
+首先，如果Task<void>可以代替Task，则已然消灭了其中一半重载。其次，如果可以用Func<Task<TResult>, void>代替Action<Task<TResult>>，则其余重载又可以消减一半。因此没错，一下子就砍掉了四分之三。
+其实道理很简单，假如一个API重载，包括返回值和参数在内，总共有N个独立可变类型（即可以选择泛型类型T以及void，且一个参数可能就有多个可变类型），则经过“排列”之后就有2N种可能性，每种都必须单独实现一遍，而这原本只需要一次实现就够了。例如上面的例子有两个独立可变类型TResult和TNewResult，于是需要实现的量就活活变为了4倍。
+这是API设计者的噩梦啊。
+一则实例
+例如，我最近在为Task编写一些扩展，主要是因为在没有C# 5中async/await环境下那么好的语言支持，我只能退而求其次地实现一个Promose模型相关的API，例如最简单的Then，我便要实现四个重载：
+static Task Then(this Task task, Func<Task> successHandler);
+static Task Then<TResult>(this Task<TResult>, Func<TResult, Task>);
+static Task<TNewResult> Then<TNewResult>(this Task, Func<Task<TNewResult>>);
+static Task<TNewResult> Then<TResult, TNewResult>(this Task<TResult>, Func<TResult, Task<TNewResult>>);
+其实这四个重载做的事情都一样，唯一的区别只是在参数和返回值上各有一个可变类型（还是TResult和TNewResult），导致一个功能要实现四遍。更重要的是其内部实现：
+static Task Then(this Task task, Func<Task> successHandler)
+{
+    var tcs = new TaskCompletionSource<object>(); // 1
+
+    task.ContinueWith(t =>
+    {
+        if (t.IsFaulted)
+        {
+            tcs.SetException(t.Exception.InnerExceptions);
+        }
+        else if (t.IsCanceled)
+        {
+            tcs.SetCanceled();
+        }
+        else
+        {
+            Task nextTask;
+
+            try
+            {
+                nextTask = successHandler(); // 2
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+                return;
+            }
+
+            ExecuteAndAssign(nextTask, tcs);
+        }
+    });
+
+    return tcs.Task;
+}
+如果您关注这四个方法的实现，就会发现它们的实现几乎完全相同，可以看到的“区别”似乎只是上面标记出的两处。但事实上您会发现，由于类型上无法兼容，导致这些结构相同的代码几乎没法重用，而必须独自写一遍。这就导致了难以避免的Repeat Yourself。对于这种简单逻辑，编写四遍还能勉强接受，但如果是更复杂的逻辑，需要编写八遍呢？此时开发人员就会急切渴望更加强大的泛型系统了。
+至于这个问题带来的其他麻烦，例如降低了对函数式编程的支持，让一些编程模式变得复杂等等就不多谈了，会耗费许多笔墨，要引起共鸣就更不容易了……
+运行时的限制
+使用者方面，让泛型参数支持使用void，对于使用者来说可谓没有任何影响，因为这种“适配”都是由编译器自动完成的。即便是现在，我们在写一个委托对象的时候，也不会指定它的具体类型，编译器会根据最后是否存在返回值类决定究竟是使用Action还是Func重载。有人可能会说，那么对于一些API来说，使用void没有意义啊，例如List<void>，存放void对象？我觉得这没什么问题，让这个List只能存放System.Void类型嘛，它的确没什么意义，但其实我们现在遇到的没意义的情况也太多了，“没意义”的场景程序员自然不会去用，也不会对“有意义”的情况造成不好的影响。
+可惜，如今System.Void类型实在是一个特例，它是一个struct，但它存在的目的似乎只是为了支持一些反射相关的API，不能作为泛型参数——您可能会说，不能支持泛型参数类型很多啊，为什么说System.Void是个特例呢？这是因为这点是记录在CLI规范（ECMA-335）里的，没错，的确是运行时规范：
+
+The following kinds of type cannot be used as arguments in instantiations (of generic types or methods):
+
+Byref types (e.g., System.Generic.Collection.List`1<string&> is invalid) 
+Value types that contain fields that can point into the CIL evaluation stack (e.g.,List<System.RuntimeArgumentHandle>) 
+void (e.g., List<System.Void> is invalid) 
+
+
+您说System.Void冤不冤，其他两种都可以说是在说一类事物，但第三项完全是指名道姓来的哪。换句话说，泛型不支持void是从运行时开始就存在限制的，并非像Enum之类的只是C#语言的限制。为什么会有这种限制，运行时规范上并没有说清楚。我的猜想是规范考虑到泛型参数会作为返回值来使用，但返回System.Void类型的方法在使用时和普通没有返回值的void方法有所区别？但在我看来，既然您本身就是个虚拟机，那完全是可以适配，“适配”本身也可以是您的职责之一嘛，所以我觉得说到底这原因还是归结为一个字：“懒”。
+之前在微博上吐槽这问题的时候，有不少朋友纷纷表示泛型参数不能用void对生活没什么影响。可能有朋友还会奇怪为什么我会有那么多抱怨？我想说，那是因为你没有用过F#等做的好的语言啊，其他如OCaml或Haskell就先不谈了，但F#与C#一样也是一门构建在.NET平台上的语言，它的泛型设计和实现就为C#做出了很好的榜样。不了解也就没抱怨，这情况见的多了。
+至于F#是怎么回避System.Void不能作为泛型参数的问题，简单地说就是它使用了自定义的FSharpVoid类型。很显然这不会被C#承认，对互操作不利。这也没办法，谁让这问题出在运行时上呢。在运行时的限制面前，编译器真的无能为力。
+相关文章
+
+C#的设计缺陷（1）：显式实现接口内的事件 
+C#的设计缺陷（2）：不能以void作为泛型参数 

@@ -1,0 +1,35 @@
+{% extends "note_base.html" %}
+{% load staticfiles %}
+{% load get_extras %}
+
+{%block head%}
+<title>搜索--Thinkhard</title>
+<link rel="stylesheet" type="text/css" media="all" href="{% static "css/style.css" %}">    
+{%endblock%}
+
+{%block note_main%}
+<div class="note_toolbar panel-heading ">
+                 <ol class="breadcrumb" style="padding:0px; margin:0px">
+                    <li><span class="glyphicon glyphicon-search"></span></li>
+                    <li>搜索</li>                   
+                    <li><a href="/note">随笔</a></li>
+                    <li class="active">{{label}}</li>
+                    <li class="active">{{query}}</li>                    
+                  </ol>                                     
+            </div>    
+            <div style="padding-top:43px" class="item-list screen-height">    
+              {%for item in notes%}
+              <div class="container-liquid item item-read" id="{{item|get:'_id'}}">
+                <div class="row">
+                  <div class="col-md-2">{{item.category}}</div>
+                  <div class="col-md-7"><a href="/note/{{item|get:'_id'}}">{{item.title}}</a></div>
+                  <!-- <div class="col-md-1">{{item.category}}</div> -->          
+                  <div class="col-md-1">{{item.author}} </div>
+                  <div class="col-md-2">
+                    2013年11月2日 
+                  </div>
+                </div>  <!-- row -->
+              </div>     
+            {%endfor%}          
+            </div>          
+{%endblock%}            

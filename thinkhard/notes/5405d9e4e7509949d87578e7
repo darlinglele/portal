@@ -1,0 +1,129 @@
+谁都知道.NET（的大部分组件）是不开源的，但是我不止在一个场合不止一次地强调过，“不开源”不代表你没法看代码，不代表你没法知道里面发生了什么。这里我不是在说.NET Reflector或是ILSpy这类反编译工具，当然它们在平时开发中也起到了很大的作用，不过很多时候更直接的方式便是阅读代码本身，尤其是当你像我一样时不时要“抄”点代码的时候。由于最近我在Tmc中“大张旗鼓”地使用.NET中BCL的代码，因此也再次强调一下这部分经验。
+在.NET最初的几年里，要从框架内部抄写一些代码只能使用.NET Reflector将程序集反编译为C#。不过随着C#引入一些相对复杂的语法糖，例如yield，反编译的结果往往就不尽如人意了。而且很显然的是，编译结果本身会丧失许多实现细节，例如最常见的“局部变量名”肯定就完全丢失了。当然更重要的是一些注释，例如下面这段：
+/*
+  Implementation Notes:
+  The generic Dictionary was copied from Hashtable's source - any bug 
+  fixes here probably need to be made to the generic Dictionary as well.
+
+  This Hashtable uses double hashing.  There are hashsize buckets in the 
+  table, and each bucket can contain 0 or 1 element.  We a bit to mark
+  whether there's been a collision when we inserted multiple elements 
+  (ie, an inserted item was hashed at least a second time and we probed
+  this bucket, but it was already in use).  Using the collision bit, we
+  can terminate lookups & removes for elements that aren't in the hash
+  table more quickly.  We steal the most significant bit from the hash code 
+  to store the collision bit.
+
+  Our hash function is of the following form: 
+
+  h(key, n) = h1(key) + n*h2(key) 
+
+  where n is the number of times we've hit a collided bucket and rehashed
+  (on this particular lookup).  Here are our hash functions:
+
+  h1(key) = GetHash(key);  // default implementation calls key.GetHashCode();
+  h2(key) = 1 + (((h1(key) >> 5) + 1) % (hashsize - 1)); 
+
+  The h1 can return any number.  h2 must return a number between 1 and
+  hashsize - 1 that is relatively prime to hashsize (not a problem if 
+  hashsize is prime).  (Knuth's Art of Computer Programming, Vol. 3, p. 528-9)
+  If this is true, then we are guaranteed to visit every bucket in exactly
+  hashsize probes, since the least common multiple of hashsize and h2(key)
+  will be hashsize * h2(key).  (This is the first number where adding h2 to 
+  h1 mod hashsize will be 0 and we will search the same bucket twice).
+
+  We previously used a different h2(key, n) that was not constant.  That is a 
+  horrifically bad idea, unless you can prove that series will never produce
+  any identical numbers that overlap when you mod them by hashsize, for all 
+  subranges from i to i+hashsize, for all i.  It's not worth investigating,
+  since there was no clear benefit from using that hash function, and it was
+  broken.
+
+  For efficiency reasons, we've implemented this by storing h1 and h2 in a
+  temporary, and setting a variable called seed equal to h1.  We do a probe, 
+  and if we collided, we simply add h2 to seed each time through the loop. 
+
+  A good test for h2() is to subclass Hashtable, provide your own implementation 
+  of GetHash() that returns a constant, then add many items to the hash table.
+  Make sure Count equals the number of items you inserted.
+
+  Note that when we remove an item from the hash table, we set the key 
+  equal to buckets, if there was a collision in this bucket.  Otherwise
+  we'd either wipe out the collision bit, or we'd still have an item in 
+  the hash table. 
+
+   -- 
+*/
+上面这一大段注释出自BCL中Hashtable的实现代码，这种真实代码中的描述才能反映出.NET在开发过程中的实现意图和思路，无论是参考还是学习都大有裨益。微软从好几年前就公开了.NET的源代码，主要目的之一是便于.NET内部的调试，微软也一直保持.NET版本和代码的同步更新。通过这些源代码，我们可以了解.NET本身在开发过程中的各种细节，包括但不仅限于代码规范，条件编译选项等等。从代码阅读上我也获得了许多经验，几乎无法一一列举。
+例如，你知道Dictionary内部会对字符串做键的情况进行随机化吗？
+namespace System.Collections.Generics {
+
+    public class Dictionary<TKey, TValue> {
+
+       private void Insert(TKey key, TValue value, bool add) {
+            if (key == null) {
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key);
+            }
+
+            if (buckets == null) Initialize(0);
+            int hashCode = comparer.GetHashCode(key) & 0x7FFFFFFF;
+            int targetBucket = hashCode % buckets.Length;
+
+#if FEATURE_RANDOMIZED_STRING_HASHING
+            int collisionCount = 0;
+#endif
+
+            for (int i = buckets[targetBucket]; i >= 0; i = entries[i].next) {
+                if (entries[i].hashCode == hashCode && comparer.Equals(entries[i].key, key)) {
+                    if (add) {
+                        ThrowHelper.ThrowArgumentException(ExceptionResource.Argument_AddingDuplicate);
+                    }
+                    entries[i].value = value;
+                    version++;
+                    return;
+                }
+
+#if FEATURE_RANDOMIZED_STRING_HASHING
+                collisionCount++;
+#endif
+            }
+
+            int index;
+            if (freeCount > 0) {
+                index = freeList;
+                freeList = entries[index].next;
+                freeCount--;
+            }
+            else {
+                if (count == entries.Length) {
+                    Resize();
+                    targetBucket = hashCode % buckets.Length;
+                }
+                index = count;
+                count++;
+            }
+
+            entries[index].hashCode = hashCode;
+            entries[index].next = buckets[targetBucket];
+            entries[index].key = key;
+            entries[index].value = value;
+            buckets[targetBucket] = index;
+            version++;
+
+#if FEATURE_RANDOMIZED_STRING_HASHING
+            if (collisionCount > HashHelpers.HashCollisionThreshold && HashHelpers.IsWellKnownEqualityComparer(comparer)) {
+                comparer = (IEqualityComparer<TKey>)HashHelpers.GetRandomizedEqualityComparer(comparer);
+                Resize(entries.Length, true);
+            }
+#endif
+        }
+    }
+}
+在FEATURE_RANDOMIZED_STRING_HASHING标记打开的情况下，我们会在插入记录时检查碰撞次数，假如超过一个HashCollisionThreshold这个阈值，则会将当前的comparer随机化。虽然我没有仔细比较过不同版本下的.NET源代码，但我相信这是为了应对前段时间出现的，由哈希碰撞所引起的DoS安全漏洞。
+不久之前我为Tmc添加了HashDictionary，其中大部分的代码与BCL的Dictionary类相同。当然在搬运过程中我也进行了一定修改和简化，例如修改了一些命名，去除一些非泛型的接口实现等等，还去掉了对序列化的支持。基本上HashDictionary与Dictionary唯一的区别便是增加了bool Remove(TKey, out TValue)这个方法。假如我们使用扩展方法来实现这个功能，则可能会这么做：
+public bool Remove<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key, out TValue value)
+{
+    dict.TryGetValue(key, out value);
+    return dict.Remove(key);
+}
+这个方法用于在删除时获取键所对应的值，这是个很常见的需求，但上述扩展方法显然需要进行两次查询，一次用来获取值，一次用于删除，这是一种浪费。不过在现有代码基础上直接添加这么一个方法却是轻而易举的，何乐而不为？

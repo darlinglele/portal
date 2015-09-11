@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load get_extras %}
+{%block head%}
+<title>{{note.title}}--Thinkhard</title>
+<link rel="stylesheet" type="text/css" media="all" href="{% static "css/style.css" %}">    
+<style type="text/css">
+              body {
+            padding-top: 53px;            
+        }
+    </style>
+{%endblock%}
+{%block main%}
+<div class="container-liquid">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="col-md-2 no-right-padding right-border">          
+          <div class="my-panel-group"  id="accordion">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <div class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#all-cates" style="cursor:hand">
+                关键字
+                </div>
+              </div>
+              <div id="all-cates" class="panel-collapse collapse in">
+                <div class="panel-body">
+                {%for keyword in note.keywords%}
+                	{{keyword}}
+               	{%endfor%}
+                </div>
+              </div>
+            </div>   
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <div class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#all-sites" style="cursor:hand">
+                相似文章
+                </div>
+              </div>
+              <div id="all-sites" class="panel-collapse collapse in">
+                <div class="panel-body">
+                  
+                </div>
+              </div>
+            </div>   
+        </div>  <!-- end of my-panel-group --> 
+        </div>  <!-- end of col-md-3 -->
+        <div class="col-md-10 no-left-padding no-right-padding right-border ">                  
+ 			<div class="my-panel-group" >                           
+	            <div class="panel panel-default">
+		            <div class="panel-heading">
+			            <!-- <div class="panel-title" data-toggle="collapse" data-parent="" href="" style="cursor:hand">
+			             --><!-- <span class='glyphicon glyphicon-eye-open'></span>  -->
+                  <ol class="breadcrumb" style="padding:0px; margin:0px">
+                    <li><span class="glyphicon glyphicon-home"></span></li>
+                    <li><a href="/">首页</a></li>
+                    <li><a href="/note">随笔</a></li>
+                    <li><a href="/note/category/{{note.category}}">{{note.category}}</a></li>
+                    <li class="active">{{note.title}}</li>
+                  </ol>                   			            
+
+		            </div>
+		        </div>    
+		    </div>    
+            <div class="item-list">
+                <div  style="float:right"><a href="/edit_note/{{note|get:'_id'}}">编 辑</a></div>
+        	  	<div style="padding:10px">
+                    {% autoescape off %} {{note.content}} {%endautoescape%}
+                </div>
+            </div>          
+         </div>
+       </div><!-- end for row --> 
+      </div> 
+{%endblock%}

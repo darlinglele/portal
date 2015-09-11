@@ -1,0 +1,164 @@
+<html>
+
+<head>
+    <script type="text/javascript" src='decision.js'></script>
+    <script type="text/javascript" src="jquery.js"></script>
+    <script type="text/javascript" src='canvasutilities.js'></script>
+
+    <script type="text/javascript" src="rsa
+		.js"></script>
+</head>
+
+<body>
+    <table>
+        <tr>
+            <td>
+
+                <div>
+                    <div>
+                        <label>Point:</label>
+                        <input type="radio" name="color" onchange="coordinate.pointStyle.color='red';" checked value="red">red
+                        <input type="radio" name="color" onchange="coordinate.pointStyle.color='blue';" value="blue">blue
+                    </div>
+                    Alpha:
+                    <input type="range" name="alpha" step="0.1" min="0" value="0.1" max="1" onchange='$("#alpha").text($(this).val()),classifier.setAlpha($(this).val());'>
+                    <label id='alpha'>0.1</label>
+                    <br>Interval:
+                    <input type="range" name="interval" step="1" min="0" max="1000" value="0" onchange='$("#interval").text($(this).val()),classifier.setInterval(parseInt($(this).val()));'>
+                    <label id='interval'>0</label>
+                    <label>ms</label>
+                </div>
+                <canvas id="myCanvas" width="400" height="200" style="cursor:crosshair">
+                    Your browser does not support the canvas element.
+                </canvas>
+                <div>
+                    <button onclick="start(this);">Start
+                    </button>
+                    <select onchange="onChange(this)">
+                        <option value="sample1">sample1</option>
+                        <option value="sample2">sample2</option>
+                        <option value="sample3">sample3</option>
+                        <option value="sample4">sample4</option>
+                        <option value="sample5">sample5</option>
+                        <option value="sample6">sample6</option>
+                    </select>
+                    <span id='count'></span>
+                </div>
+            </td>
+            <td>
+            
+    <p>Linear Regression:</p>
+
+    <canvas id="regression" width="400" height="200" style="cursor:crosshair">
+        Your browser does not support the canvas element.
+    </canvas>
+
+
+            </td>
+        </tr>
+    </table>
+
+    <script>
+        function start(obj) {
+            if (coordinate.points.length == 0) {
+                return false;
+            }
+
+            var samples = coordinate.points.map(function (item) {
+                return {
+                    input: [item.x, item.y],
+                    output: item.color == 'red' ? 1 : -1
+                }
+            });
+
+            obj.onclick = function () {
+                stop(obj);
+            };
+            obj.innerText = 'Stop';
+
+            classifier.process(samples, coordinate, function (result) {
+                console.log(result.message);
+                obj.innerText = "Start";
+                obj.onclick = function () {
+                    start(obj)
+                };
+            });
+        }
+
+        function stop(obj) {
+            obj.innerText = 'Start';
+            obj.onclick = function () {
+                start(obj);
+            };
+            classifier.stop(function (result) {
+                console.log(result.message);
+            });
+        }
+
+        function onChange(obj) {
+            coordinate.points = [{
+                "x": 112,
+                "y": 16,
+                "color": "red",
+                "size": 5
+            }, {
+                "x": 157,
+                "y": 27,
+                "color": "red",
+                "size": 5
+            }, {
+                "x": 183,
+                "y": 64,
+                "color": "red",
+                "size": 5
+            }, {
+                "x": 139,
+                "y": 53,
+                "color": "red",
+                "size": 5
+            }, {
+                "x": 106,
+                "y": 50,
+                "color": "red",
+                "size": 5
+            }, {
+                "x": 75,
+                "y": 23,
+                "color": "blue",
+                "size": 5
+            }, {
+                "x": 95,
+                "y": 66,
+                "color": "blue",
+                "size": 5
+            }, {
+                "x": 70,
+                "y": 78,
+                "color": "blue",
+                "size": 5
+            }, {
+                "x": 86,
+                "y": 114,
+                "color": "blue",
+                "size": 5
+            }, {
+                "x": 124,
+                "y": 104,
+                "color": "blue",
+                "size": 5
+            }, {
+                "x": 7,
+                "y": 50,
+                "color": "blue",
+                "size": 5
+            }];
+            coordinate.refresh();
+        }
+    </script>
+    <script type="text/javascript" src="Classifier.js"></script>
+    <script type="text/javascript" src="Coordinate.js"></script>
+    <script type="text/javascript" src="linear.js"></script>
+    <script type="text/javascript" src="regression.js"></script>
+</body>
+
+</html>

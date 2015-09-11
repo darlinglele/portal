@@ -1,0 +1,107 @@
+
+<p>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;在页面中水平分栏布局非常常见，实现的方式也是五花八门，但更一般的是使用浮动流（floats）的方式。浮动流是CSS可视化格式模型中三中定位方案的一种。其他的两种定位方案分别是：普通流（Normal flow）， 绝对定位（Absolute positioning）。
+</p>
+<strong>普通流布局</strong>
+<ul>
+	<div style="width:600px;">		
+	    <div style="background-color:red;">第一个块</div>		
+	    <div style="background-color:blue;">第二个块</div>
+	    <div><span style="background-color:red">第一个行内元素</span><span style="background-color:green">第二个行内元素</span></div>
+	</div>	
+</ul>		
+<p>		可见，普通流是按照块的顺序上下来布局， 如果行内元素，则在行内按照左右顺序布局。</p>
+<br>
+<strong>浮动流布局</strong>	
+<ul>
+	<div style="width:600px;">		
+
+		<div style="float:left; font-size:14px; background-color:blue">我是浮动块，我被我的兄弟块无视了</div>
+		<div style="background-color:red;">兄弟块</div>		
+	</div>
+	<br>
+	<div style="width:600px; background-color:red;">		
+			<div style="float:left; background-color:green; width:80px;height:80px">			
+			</div>
+			<div style="float:right; background-color:blue; width:80px;height:80px">			
+			</div>
+			这是一段环绕文字，这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字这是一段环绕文字
+	</div>			
+</ul>		
+	<br>	
+	<p>可以看到，设置了浮动的块，完全被他的兄弟元素无视，无论兄弟元素是块元素还是行内元素他们在按照普通流方式进行布局。此后浮动元素才在自己普通流的位置从兄弟元素那里生生的挤出位置来， 如果一行不能容纳下，就会把兄弟块元素挤到下一行。 	
+	</p>
+	<br>
+	<strong> 浮动流布局的问题</strong>	
+	<ul>
+		<li>
+			<span>覆盖了兄弟块元素</span>		
+			<div style="width:600px;">			
+				<div style="float:left; font-size:14px; background-color:blue; width:20%; margin-right:10px;">float:left</div>
+				<div style="background-color:red">brother block</div>
+			</div>	
+		</li>
+		<li>
+			<span>在父块元素的内部，“做空”父块，使父块元素忽略了内部的float块</span>
+			<div style="width:600px;">						
+				<div style="border:1px solid black;">
+				<div style="float:left; background-color:blue; width:20%; margin-right:10px;">float:left</div>
+				</div>
+			</div>
+		</li>	
+	</ul>	
+	<br>
+	<strong> 解决方案：块格式化上下文(Block formatting contexts)</strong>
+	<p>
+	 为了解决兄弟块元素被覆盖，以及父块元素被做空的问题， 我们可以通过兄弟块或者父块元素设置BFC来解决， 一种BFC的设置方法是：overflow:hidden。
+	</p>
+	<ul>
+		<li>
+			<span>兄弟块元素设置BFC</span>		
+			<div style="width:600px;">					
+				<div style="float:left; background-color:blue; width:20%; margin-right:10px;">float:left</div>
+				<div style="overflow:hidden; background-color:red">brother block with BFC</div>
+			</div>	
+		</li>
+		<li>
+			<span>父块设置元素BFC</span>
+			<div style="width:600px;">						
+				<div style="overflow:hidden;border:1px solid black;">
+				<div style="float:left; background-color:blue; width:20%; margin-right:10px;">float:left</div>
+				</div>
+			</div>		 
+		</li>		
+	</ul>
+	<p>
+	因此也可以说，设置BFC可以使得块元素的不再“忽视”浮动元素， 而是让浮动元素按普通流方式完成布局， 从而体现出控制上下文的能力，使得父块元素内部可以包含浮动元素，外部不受浮动元素的“排挤”。
+	</p>
+	<br>
+	<strong>使用块格式化上下文进行页面布局</strong>
+	<ul>
+		<li>
+			<span>水平2列的布局</span>		
+			<div style="width:600px;">		
+				<div style="float:left; background-color:blue; width:20%; margin-right:10px;">float:left</div>
+				<div style="overflow:hidden; background-color:red">block formatting contexts</div>
+			</div>	
+		</li>
+		<li>
+			<span>水平3列的布局</span>
+			<div style="width:600px;">						
+				<div style="float:left; background-color:blue; width:20%; margin-right:10px;">float:left</div>
+				<div style="float:right; background-color:green; width:20%; margin-left:10px;">float:right</div>
+				<div style="overflow:hidden; background-color:red">block formatting contexts</div>
+			</div>	
+		</li>
+		<li>
+			<span>水平N列的布局</span>
+			<div style="width:600px;">						
+				<div style="float:left; background-color:blue; width:20%; margin-right:10px;">float:left</div>
+				<div style="float:left; background-color:blue; width:20%; margin-right:10px;">float:left</div>
+				<div style="float:left; background-color:blue; width:20%; margin-right:10px;">float:left</div>
+				<div style="float:left; background-color:blue; width:20%; margin-right:10px;">float:left</div>	
+				<div style="overflow:hidden; background-color:red">last</div>
+			</div>
+		</li>		
+	</ul>	
+

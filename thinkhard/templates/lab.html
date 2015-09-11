@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load get_extras %}
+{% load staticfiles %}
+
+{% block head %}
+    <title> Think hard--阅读 </title>
+    <script type="text/javascript">
+        // $(function(){
+        //     $('.item').bind('click',function(){
+        //         $.ajax({
+        //           url: "/api/"+ this.id,
+        //           context: document.body
+        //         }).done(function(data) {
+        //             $('#main').empty();            
+        //             $('#main').append($(data));
+        //         });             
+        //     });        
+        // })    
+    </script>        
+     <style type="text/css">
+        body {
+            padding-top: 50px;
+            padding-bottom: 20px;
+        }
+    </style>
+{% endblock %}
+
+
+{% block content %}
+        <div id="sidebar">
+           <div class="btn-group">
+                <button type="button" class="btn btn-default">全部</button>
+                <button type="button" class="btn btn-default">已读</button>
+                <button type="button" class="btn btn-default">未读</button>
+            </div>
+            {% for site in sites %}
+                <div class="accordion-group">
+                  <div class="accordion-toggle" data-toggle="collapse" href="#{{site.id}}">
+                      <span>{{site.title}}</span>                 
+                      <span style='float:right;font-style:italic; font-size:14px;color:red'>{{site.items|length}}</span>
+                  </div>
+                  <div id="{{site.id}}" class="accordion-body collapse" style="height: 0px; ">
+                    <div class="accordion-inner">
+                      {% for item in site.items %}                  
+                         <div class='item' id="{{item|get:"_id"}}">{{item.title}}</div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}    
+        </div>
+       
+        <div id="main">            
+       
+        </div>
+
+   
+{% endblock %}
+{% block script %}
+{% endblock %}
+

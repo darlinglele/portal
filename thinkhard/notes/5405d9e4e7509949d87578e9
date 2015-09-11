@@ -1,0 +1,57 @@
+相对于的Java的“类型擦除（Type Erasure）”来说，.NET中的泛型可谓是真正的泛型，这让我们可以有能力区分运行时所使用的不同的具体类型，大大增强了程序设计的性能和表现能力。
+打个比方，在Java 8中终于引入了Lambda表达式，但是由于它的伪泛型只能是一个“引用类型”而不能是“基础类型”，因此我们没法从int数组发起函数式操作，最后也没法回到List<char>这种类型（事实上这种类型在Java中根本不存在）。这除了影响编程体验和表达能力以外，对于内存和性能都有大量额外的开销。试想，谁希望在找出符合条件的一万个int数值的时候，必须额外创建一万个Integer对象，导致堆上增加几百上千K的空间，还有一万个对象带来的GC压力？当然，这次我们暂时不谈这方面，还是来谈谈.NET中“真泛型”这一特点所带来的编程便利。
+在.NET中，我们编写一个泛型类型的时候，只会给出一个泛型类型的定义，例如List<T>，我们检查typeof(List<>).IsGenericDefinition也会得到true。然而，程序在真正运行的时候，使用的都是提供了具体泛型参数的类型，例如List<int>或是List<string>。我们没法创建一个“泛型定义”的实例或是访问它的静态成员等等，最多使用反射来访问它的信息。
+在运行过程中，.NET运行时会（在第一次使用时）为不同的值类型创建一份不同的代码，而让所有的引用类型共享同一份代码。这是因为，假如T是值类型，那么生成的代码操作的都是栈上的数据，需要操作的字节数会有所不同，而引用类型都只需要操作16或32字节的地址，是一致的。当然，理论上List<long>和List<DateTime>是可以共享代码的，因为它们其实都只是一个64字节的长整型，但是还是有些情况，尽管都是64字节的长度，如List<long>和List<double>就不能共享代码。因此，运行时就统一为不同的值类型都创建不同的代码了。这的确会带来一定的额外开销，但在我看来，相比“真泛型”带来的便利，这点开销完全是值得的。想要了解更多这方面的内容，可以参考著名的Joe Duffy同学《On generics and (some of) the associated overheads》这篇文章。
+不过无论执行的代码是否共享，不同具体类型参数的类型都是各自独立的，它们各有各的元数据，各有各的需方法表等等，因此它们的静态成员也是各自独立的。之前我也写过这方面的文章，例如它可能会让人上当，也可以利用这点写出高效的实现。这里我可以举出后者的另一个例子，例如在.NET中的ConcurrentDictionary实现中需要知道当前TValue类型的读写操作是否是原子的，它的实现就是这样的：
+// Whether TValue is a type that can be written atomically (i.e., with no danger of torn reads)
+private static readonly bool s_isValueWriteAtomic = IsValueWriteAtomic();
+
+/// <summary>
+/// Determines whether type TValue can be written atomically 
+/// </summary> 
+private static bool IsValueWriteAtomic()
+{
+    Type valueType = typeof(TValue);
+
+    //
+    // Section 12.6.6 of ECMA CLI explains which types can be read and written atomically without
+    // the risk of tearing.
+    // 
+    // See http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-335.pdf 
+    //
+    bool isAtomic =
+        (valueType.IsClass)
+        || valueType == typeof(Boolean)
+        || valueType == typeof(Char)
+        || valueType == typeof(Byte)
+        || valueType == typeof(SByte)
+        || valueType == typeof(Int16)
+        || valueType == typeof(UInt16)
+        || valueType == typeof(Int32)
+        || valueType == typeof(UInt32)
+        || valueType == typeof(Single);
+
+    if (!isAtomic && IntPtr.Size == 8)
+    {
+        isAtomic |= valueType == typeof(Double) || valueType == typeof(Int64);
+    }
+
+    return isAtomic;
+}
+我相信，假如让很多同学来实现这部分逻辑的话，就会创建IsValueWriteAtomic这样的静态方法，然后在需要的时候反复调用。但事实上，由于不同的泛型参数所带来的具体类型完全独立，因此我们完全可以像.NET那样将这个函数的结果保存在一个静态变量中，然后每次访问即可。
+这个特性有时还可以帮助我们简化一些代码，举个最简单的例子：
+public class SingletonBase<T> where T : new()
+{
+    public static readonly T Instance = new T();
+}
+
+public class MySingleton1 : SingletonBase<MySingleton1>
+{
+    // ...
+}
+
+public class MySingleton2 : SingletonBase<MySingleton2>
+{
+    // ...
+}
+这样我们就可以不用在每个类型中加上一个只读的Instance静态成员了。当然，这个例子简单地几乎没有实用意义，我们以后会来讨论更有价值的使用案例。

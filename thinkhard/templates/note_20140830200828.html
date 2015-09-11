@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load get_extras %}
+{%block head%}
+<title>随笔--Thinkhard</title>
+<link rel="stylesheet" type="text/css" media="all" href="{% static "css/style.css" %}">    
+{%endblock%}
+{%block main%}
+<div class="container-liquid">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="col-md-2 no-right-padding right-border">          
+          <div class="my-panel-group screen-height" id="accordion">                    
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <div class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#all-tags" style="cursor:hand">
+                文章标签
+                </div>
+              </div>
+              <div id="all-tags" class="panel-collapse collapse in">
+                <div class="panel-body">
+                {%for item in tags%}
+                	<a href="#">{{item.name}} <span class="badge">{{item.count}}</span></a>
+               	{%endfor%}
+                </div>
+              </div>
+            </div>   
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <div class="panel-title" data-toggle="collapse" data-parent="#accordion" href="#all-sites" style="cursor:hand">
+                文章分类
+                </div>
+              </div>
+              <div id="all-sites" class="panel-collapse collapse in">
+                <div class="panel-body">
+                  {%for category in categories%}
+                  <a href="#">{{category.name}} <span class="badge">{{category.count}}</span></a>
+                {%endfor%}
+                </div>
+              </div>
+            </div>   
+        </div>  <!--note end of my-panel-group --> 
+        </div>  <!-- end of col-md-3 -->
+        <div class="col-md-10 no-left-padding no-right-padding right-border ">                  
+     			  <div id="toolbar">                               	            
+    			            文章列表    			        
+    		    </div>    
+            <div style="padding-top:53px" class="item-list screen-height">    
+        	  	{%for item in notes%}
+  			      <div class="container-liquid item item-read" id="{{item|get:'_id'}}">
+  			        <div class="row">
+                  <div class="col-md-1">{{item.category}}</div>
+  			          <div class="col-md-8"><a href="/note/{{item|get:'_id'}}">{{item.title}}</a></div>
+  			          <!-- <div class="col-md-1">{{item.category}}</div> -->          
+  			          <div class="col-md-1">{{item.author}} </div>
+  			          <div class="col-md-2">
+  			            2013年11月2日
+  			          </div>
+  			        </div>  <!-- row -->
+  			      </div>     
+			     	{%endfor%}          
+            </div>          
+         </div>
+       </div><!-- end for row --> 
+      </div> 
+{%endblock%}

@@ -1,0 +1,44 @@
+需求本身会是最好的动力。上个周末除了忙于构建Jscex主站以外，我还重新整理了Jscex的预编译器——或者说是AOT编译器。Jscex自带一个JIT编译器，配合eval可以在开发时避免额外的编译过程，这也可以说是Jscex的亮点之一。不过对于线上环境，一般都还是建议进行预编译，也就是将Jscex方法定义直接替换为目标代码。这么做的好处主要是为了降低部署时的脚本体积（摆脱对编译器的依赖所有代码加起来不到4KB），或是让异常情况下的错误定位变得容易（主要面向Node.js生产环境）。此外，为了便于编写文档，我还为DocPad开发了一个插件，用于对Jscex脚本进行预编译。
+与其他Jscex的包不同，Jscex预编译器的定位不是一个Jscex模块，而是一个独立的工具。因此，它的第一种使用方式是作为一个命令：
+> npm install jscexc
+...
+
+> node node_modules/jscexc
+Usage: node ./node_modules/jscexc --input <input_file> --output <output_file>
+
+Options:
+  --input, -i   The input file   [required]
+  --output, -o  The output file  [required]
+
+Missing required arguments: input, output
+但其实最好是将这个包构造为一个可以直接执行的命令，但我还不是还不是很清楚如何让它像mocha那样同时支持Windows和*nix，所以暂时还没去实现。等搞定这个问题之后，就可以像下面这样使用jscexc命令了：
+> [sudo] npm -g install jscexc
+...
+
+> jscexc --input test.js --output test.aot.js
+于是这样便能将test.js的内容转化为test.aot.js，其中的Jscex方法定义都会被直接替换成目标代码。
+这么做便达到了预编译的效果，但Jscex预编译器同样可以当作模块使用。例如，我在编写首页示例的时候，我就利用DocPad提供的插件机制，直接将*.jscex文件经过预编译，转化为最终的JavaScript代码：
+# Export Plugin
+module.exports = (BasePlugin) ->
+    # Define Plugin
+    class JscexcPlugin extends BasePlugin
+        name: "jscexc"
+        
+        # Render some content
+        render: (opts, next) ->
+            # Prepare
+            {inExtension, outExtension, templateData, file} = opts
+
+            # Check extensions
+            if inExtension in ["jscex"] and outExtension in ["js"]
+                # Requires
+                jscexc = require("jscexc")
+
+                # Render
+                opts.content = jscexc.compile(opts.content)
+
+            # Done, return back to DocPad
+            return next()
+虽然docpad-plugins-jscexc插件使用CoffeeScript编写，但看懂这段代码应该不成问题。总体而言，就是在需要的时候（这里是将*.jscex文件转化为*.js文件）把jscexc当作模块引入进来，再调用它的compile方法，任何Node.js文件都能这么使用jscexc包。现在，我在使用DocPad编写文档示例的时候，只要直接编写Jscex代码，DocPad会自动生成其目标内容，而在页面上只需要引入最基本的Jscex异步类库即可，非常方便。
+当然也有一些已知问题，例如输入文件的换行符必须是Unix下的\n而不能是Windows下的\n\r，这问题到不大，使用dos2unix或者随便哪个文本编辑器都能轻松搞定（当然我还是会修复这个问题的）。还有同学汇报说不能使用module语句——Jscex预编译器为了尽可能保留输入文件的内容，于是使用了能提供更多信息的Narcissus分析器，可惜它实在太自作多情了一些，把module当作保留字了，所以我对Narcissus Parser做了简单的修补，也算是绕过了这个问题。
+总有天我会换掉这个中看不中用的Narcissus分析器，例如Esprima似乎就挺不错的，而且实在不行就自己写一个。

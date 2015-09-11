@@ -1,0 +1,85 @@
+任何异步编程的类库要做的第一件事往往便是统一异步编程的模型，例如Jscex的异步模块自带一个类似于.NET中的异步任务模型。围绕统一的模型，开发人员便可以尽情地提供各种扩展，例如Jscex异步增强模块中的whenAll或whenAny一样。换句话说，假如要混用两种异步编程模型，往往需要将其中一种适配至另外一种，因此异步增强模块中也提供了fromCallback及fromStandard辅助，能够轻易地将最简单的（也是Node.js里使用的）两种异步函数接口绑定为异步任务。那么Promise/A呢？它也是种目前运用十分广泛的异步编程模型，Jscex对它有什么特别的支持吗？当然有，但方式有所不同，更为直接。
+Promise/A现在为CommonJS的草案之一，提出了一种Promise模型的设计及API表现。虽说它离“标准”还有很长一段距离，但其实很多类库都已经实现了这个规范了，例如著名的jQuery，node-promise，还有用来编写Win8中Metro应用的HTML5开发平台。当然严格来说，它们都是基于Promise/A规范的一套“扩展实现”，但既然有了共有的子集，那事情就已经好办多了。例如，之前在一个QQ群上某同学建议我提供一个类似于fromStandard一样的fromPromise辅助方法。这当然没问题，其实很简单，接下来也会做，但Jscex考虑地更多。
+或者说，就是多问了几个为什么：
+为什么需要fromPromise辅助方法？因为用户使用了Promise异步模型，而Jscex希望提供更好的辅助环境。为什么对方不使用Jscex自带的异步任务模型？因为用户可能已经有部分代码采用了Promise模型。为什么它要使用Promise这种已经较为成熟且复杂的异步模型？因为用户可能已经有了一个围绕着Promise模型开发的应用程序，甚至是一个已经拥有大量辅助方法支持的应用开发框架（例如Win8），而在这个情况下再结合Jscex的异步任务模型，则需要来回转换，显得略为冗余。那么，Jscex能否直接对Promise异步模型提供支持呢？
+当然可以，从一开始Jscex就是这么设计的，且看这个示例：
+Jscex.Promise.create = function (init) {
+    var dfd = new $.Deferred();
+    init(dfd.resolve, dfd.reject);
+    return dfd.promise();
+}
+
+var oneRoundTripAsync = eval(Jscex.compile("promise", function () {
+    $await($("#block").animate({ left: "200px" }, 1000).promise());
+    $await($("#block").animate({ left: "0px" }, 1000).promise());
+}));
+
+var roundTripsAsync = eval(Jscex.compile("promise", function (n) {
+    for (var i = 0; i < n; i++) {
+        $await(oneRoundTripAsync());
+    }
+}));
+这是用jQuery自带的animate方法创建动画的示例。正如我之前说的那样，各个模型其实都是基于Promise/A的“扩展”，因此Jscex无法提供一种另所有人都满意的Promise模型，于是它谁都不去迎合，将构造Promise对象的任务交给使用者——这便是上面代码中提供Jscex.Promise.create方法的原因。之后便可以像使用Jscex异步模型那样创建和使用异步方法了，区别仅仅是：
+
+使用promise作为构造器的名称。 
+异步方法返回的都将是Promise对象。 
+$await操作接受的参数也是Promise对象。 
+执行异步方法之后，异步操作已经直接启动了，而无需调用start方法。 
+
+而想在Win8里开发也一样，首先提供一个用于创建Promise对象的工厂方法：
+Jscex.Promise.create = function (init) {
+    return new WinJS.Promise(init);
+}
+然后便可以将以下这段使用回调实现的“提示”、“显示选择器”、“显示图片”这个事务：
+var MessageDialog = Windows.UI.Popups.MessageDialog;
+var UICommand = Windows.UI.Popups.UICommand;
+var FileOpenPicker = Windows.Storage.Pickers.FileOpenPicker;
+var PickerViewMode = Windows.Storage.Pickers.PickerViewMode;
+var PickerLocationId = Windows.Storage.Pickers.PickerLocationId;
+var FileAccessMode = Windows.Storage.FileAccessMode;
+
+WinJS.Namespace.define("MyApp", {
+    showPhoto: function () {
+        var dlg = new MessageDialog("Do you want to open a file?");
+        dlg.commands.push(new UICommand("Yes", null, "Yes"));
+        dlg.commands.push(new UICommand("No", null, "No"));
+
+        dlg.showAsync().then(function (result) {
+            if (result.id == "Yes") {
+                var picker = new FileOpenPicker();
+                picker.viewMode = PickerViewMode.thumbnail;
+                picker.suggestedStartLocation = PickerLocationId.picturesLibrary;
+                picker.fileTypeFilter.push(".jpg");
+
+                picker.pickSingleFileAsync().then(function (file) {
+                    if (file != null) {
+                        $("#myImg")[0].src = URL.createObjectURL(file);
+                    }
+                });
+            }
+        });
+    }
+});
+实现为：
+WinJS.Namespace.define("MyApp", {
+    showPhoto: eval(Jscex.compile("promise", function () {
+        var dlg = new MessageDialog("Do you want to open a file?");
+        dlg.commands.push(new UICommand("Yes", null, "Yes"));
+        dlg.commands.push(new UICommand("No", null, "No"));
+
+        var result = $await(dlg.showAsync());
+        if (result.id == "Yes") {
+            var picker = new FileOpenPicker();
+            picker.viewMode = PickerViewMode.thumbnail;
+            picker.suggestedStartLocation = PickerLocationId.picturesLibrary;
+            picker.fileTypeFilter.push(".jpg");
+
+            var file = $await(picker.pickSingleFileAsync());
+            if (file != null) {
+                $("#myImg").src = URL.createObjectURL(file);
+            }
+        }
+    }))
+});
+Jscex这不又瞬间支持了Win8开发了吗？此时所有的Jscex异步函数都会返回一个Promise对象，它和WinJS中各种表达异步操作的Promise对象完全相同，也可以和Promise.join以及Promise.any共同使用。而且，实现一个支持Promise的Jscex构造器只需要30多行代码，其中相当部分还是函数定义等架子代码，创建一个Jscex构造器的大部分代码都已经由构造器基础模块提供了。换句话说，假如您的应用中已经有个深入骨髓的异步模型，也只需30多行代码，便可以直接在Jscex中使用了。
+这也是Jscex的精妙之处之一：一个简单统一的结构，可以实现出各种灵活的功能。

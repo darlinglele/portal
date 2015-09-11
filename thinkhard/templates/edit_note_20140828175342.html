@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load get_extras %}
+{%block head%}
+<title>编辑--{{note.title}}--Thinkhard</title>
+<link rel="stylesheet" type="text/css" media="all" href="{% static "css/style.css" %}">
+<style type="text/css">
+              body {
+            padding-top: 53px;
+        }
+    </style>
+{%endblock%}
+
+{%block main%}
+<!-- 加载编辑器的容器 -->
+    <div class="input-group">
+      <span class="input-group-addon">标题</span>
+      <input type="text" id="new_title" class="form-control" value="{{note.title}}">
+    </div>
+
+    <div class="input-group">
+        <script id="container" name="content" type="text/plain"></script>
+        <!-- 配置文件 -->
+        <script type="text/javascript" src="{% static 'ueditor/ueditor.config.js' %}"></script>
+        <script type="text/javascript" src="{% static 'ueditor/ueditor.all.js' %}"></script>
+        
+    </div>
+    <input id="note_content" type="hidden" value="{{note.content}}"/>
+    <input id="note_id" type="hidden" value="{{note|get:'_id'}}"/>
+    <div class="btn-group">
+        <button type="button" id="btn_save" class="btn btn-default">保 存</button>
+    </div>
+{%endblock%}
+
+{%block script%}
+     <script>
+       $(window).load(function(){
+           var ue = UE.getEditor('container');
+           // ue.setContent($('#note_content').val());
+           var save_note =function(){
+               new_note = {'_id': $('#note_id').val(), 'title': $('#title').text(), 'content':ue.getContent()};
+               var callback = function(result){
+                    alert('保存成功！')
+                    //window.location.href = '/note/'+ new_note._id
+               }
+               $.post("/save_note/", new_note, callback);
+           }
+           $('#btn_save').bind('click', save_note);
+          })
+     </script>
+{%endblock%}

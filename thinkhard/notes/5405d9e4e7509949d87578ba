@@ -1,0 +1,69 @@
+Huffman编码 是一种编码方式，常用于无损压缩。本文只介绍用Java语言来实现该编码方式的算法和数据结构。
+Huffman编码的核心在于构建一颗最优化的二叉树，首先要得到一个原数据编码中的【编码：频率】的列表，然后根据列表构建二叉树，最后对二叉树编码。
+
+
+第一步: 计算出每个词（编码）出现的频次，并输出到一个列表
+例如字符串："this is an example of a huffman tree", 它的二进制编码是11101001101000110100111100111000001101001111001110000011000011101110100000110010111110001100001110110111100001101100110010110000011011111100110100000110000110000011010001110101110011011001101101101110000111011101000001110100111001011001011100101
+英文字母的表示只需要一个byte， 所以我们每次取二进制中的一个byte，放入HashMap<Byte,Node<Byte,Integer>>, 其中Byte作为HashMap的key，它的Value是一个Node<Byte, Integer> 。Node保存了byte值和出现的频次，将来用于构建Huffman树。遍历二进制编码，最后输出List<Node<Byte,Integer>>
+ 。
+代码如下:
+
+        String source = "this is an example of a huffman tree";
+        byte[] sourceBytes = source.getBytes();
+        HashMap<Byte, Node<Byte, Integer>> frequency = new HashMap<>();
+        for (byte key : sourceBytes) {
+            if (frequency.containsKey(key)) {
+                frequency.put(key, new Node<>(key, frequency.get(key).weight + 1));
+            } else {
+                frequency.put(key, new Node<>(key, 1));
+            }
+        }
+
+
+        List<Node<Byte, Integer>> nodes = new ArrayList<>(frequency.values());
+nodes包含每个字母出现的频次：[o:1, l:1, u:1, r:1, p:1, x:1, n:2, m:2, h:2, i:2, t:2, s:2, f:3, e:4, a:4,  :7]
+第二步：构建最优二叉树
+
+ while (nodes.size() > 1) {
+            Node<Byte, Integer> first = nodes.get(0);
+            Node<Byte, Integer> second = nodes.get(1);
+            nodes.add(new Node<>(null, first.weight + second.weight, first, second));
+            nodes.remove(0);
+            nodes.remove(0);
+            Collections.sort(nodes, (left, right) -> left.weight - right.weight);
+        }
+
+根据优先队列算法我们总是取队列中weight（频次）最小的两个节点，把它们的weight相加得到一个新的节点放入队列中，它们本身则作为新节点的左右子节点，构建结束时列表中剩余的唯一节点就是Huffman树的root。
+
+        HuffmanTree<Byte, Integer> huffmanTree = new HuffmanTree<>(nodes.get(0));
+
+
+第三步：给Huffman树编码
+
+在第二步中构造完成了一颗尚未编码的树，编码其实就是给每一个节点一个唯一的编码，而且这个编码不可能是其他节点编码的前缀，根据Huffman编码的算法要做到这样很简单： 初始root的编码为空（长度为0），从root开始遍历，左子节点编码=父节点编码+0，右子节点编码=父节点编码+1 。
+
+setCode(this.root, new BitArray(0));
+
+private void setCode(Node<K, V> node, BitArray code) {
+        node.code = code;
+        if (node.left != null) {
+            BitArray leftCode = newBitArray(node.code, false);
+            setCode(node.left, leftCode);
+        }
+        if (node.right != null) {
+            BitArray rightCode = newBitArray(node.code, true);
+            setCode(node.right, rightCode);
+        }
+    }
+
+
+
+遍历输出结果：[e:4:000,a:4:001,n:2:0100,m:2:0101,h:2:0110,i:2:0111,t:2:1000,s:2:1001,o:1:10100,l:1:10101,u:1:10110,r:1:10111,p:1:11000,x:1:11001,f:3:1101, :7:111]
+
+完毕， 全部代码放在https://github.com/darlinglele/huffman
+
+
+                作者：u011459840 发表于2013-10-3 12:48:32 原文链接
+
+
+            阅读：314 评论：0 查看评论

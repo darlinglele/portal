@@ -1,0 +1,35 @@
+在 Quora看到一个有意思的问题，Working at Google: What is it like to be a Java programmer at Google?，笔者对原文做了简单的编译，虽不能至，心向往之。以下是正文：
+
+严格遵守“Google Style”，这份“Google Style”会有详细的文档清楚地告诉你如何编码（一开始你会觉得很痛苦，但是以后你会享受它带来的好处）
+非常严格的代码审查（同样一开始会觉得很烦人，但以后你会感激它的），它能确保代码稳定的运行。（我从其他公司小伙伴那听闻Google对代码要求让人汗颜）
+使用内部定制化的Eclipse IDE（真正的勇士在用VIM）
+自定义一切（构建系统、测试系统、java、版本控制、问题追踪系统、OS、等等），很多外面的东西放在Google的规模基本不能用
+Google Collection（你不需要“new ArrayList()”，取而代之的是“Lists.newArrayList()”或者类似的操作）
+巨大的Java文件（我曾经见过一个.java文件超过9万行），通常这是自动生成的代码
+忘记标准的序列化相关的东西，欢迎使用protocol buffers，以Google的量级来说这很重要
+有各种机会来提升你的技能（技术讲座、代码实验室、专题讨论等等）
+大量的会议
+可升降的桌子
+
+两个大的显示器
+
+每周五的免费啤酒
+附近的小厨房能填充肚子
+
+
+14. Slides 和 firepoles （就是那个弯弯的东东）能直达自助餐厅，因此你可以吃的更胖
+
+ 15.  厕所墙壁上的”编程纸“能使你的“方便”之旅更具有“码农范儿”
+笔者整理了文章中可能出现过的资源（如不能打开，请自备梯子）：
+
+
+Google Java Style
+How Google Does Code Review
+Google Plugin for Eclipse
+Building Software at Google Scale Tech Talk
+Building Software Systems at Google and Lessons Learned
+guava-libraries
+Protocol Buffers
+
+
+相关文章Oracle意外赢官司，程序员或过苦日子传闻：Google高层施密特已经开始使用Moto X据传Google在开发基于Android操作系统的游戏机深入理解JVM内幕：从基本结构到Java 7新特性测试基于Web的Spring应用程序（第一部分）CSRF 攻击的应对之道关于《Java那么健壮，怎么会挂？》的1000条回复打开Java中的SecurityManager10个精妙的Java编码最佳实践Java线程面试题 Top 50

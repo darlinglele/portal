@@ -1,0 +1,60 @@
+
+作为一个豆瓣fm的忠实用户，被豆瓣fm与音乐不期而遇的理念深深吸引。 最近豆瓣推出升级到PRO享受更高品质音乐的服务，升级后确实质量提升明显。但是有个功能仍然没有提供，那就是无法下载喜欢的歌曲。 在对豆瓣fm网页经过一番研究之后，决定做个下载当前歌曲的Chrome插件，只是方便自己下载喜欢的音乐,不喜勿入。
+第一步：找到资源
+用chrome的开发者工具打开douban.fm首页，通过chrome开发者工具中的Network可以查看所有的资源，其中包括.mp3文件。 在看看豆瓣播放器是个flash，ok了，flash通过http协议来get音频文件。
+第二步：获取当前播放歌曲的URL
+第一步中我们了解到，豆瓣的flash音乐播放器直接通过http get方法获取资源，因此我们无法直接得知flash内部正在播放的文件地址，我们只好通过chrome extension的chrome.webRequest.onBeforeRequest.addListener 事件来监视所有的http request, 所以一旦后台监听程序发现新的.mp3请求就告知页面更新下载地址。 但chrome extension的页面和后台的通知机制是页面主动询问chrome后台。 所以也就需要更多的代码来实现这个简单的功能。在这里我们在后台注册与页面的通信事件，
+ 通过这个事件，一旦有页面消息传递给后台，在后台中注册的方法将会被调用：
+
+chrome.extension.onMessage.addListener(function (request, sender, sendResponse){ dosomething;} );
+
+
+页面通过： 
+chrome.extension.sendMessage({from:"douban.fm"}, function (response) {dosomething}）;  
+
+来和后台通信，其中第一参数用来指明请求的页面，第二个参数则是一个回调函数。
+
+还有一个后台事件很有用：
+
+chrome.webRequest.onHeadersReceived.addListener(function (details) {dosomething}, arg2);
+
+这个事件发生在http reponse header 达到时，可以用来做一些小事情，比如说修改音频保存时使用的名字。代码如：
+
+
+chrome.webRequest.onHeadersReceived.addListener(function (details) {
+    if(details.url.indexOf(".mp3?douban=")!=-1){
+     response =details;// for debugging
+     for (i = 0; i < details.responseHeaders.length; i++) {
+       if(details.responseHeaders[i].name.toLowerCase() == "content-type"){
+          details.responseHeaders[i].value= "application/x-please-download-me";
+        }
+     }
+     details.responseHeaders.push({name:"Content-disposition",value:"attachment; filename="+tab.title.substring(0, tab.title.lastIndexOf('-')-1)+ ".mp3"});
+    }
+
+
+    return {
+        responseHeaders : details.responseHeaders
+    };
+}, {
+        urls : ["<all_urls>"],
+        types : ["main_frame", "sub_frame", "stylesheet", "script", "image", "object", "xmlhttprequest", "other"]
+    },
+["blocking", "responseHeaders"]);
+
+
+
+ 第三步：创建页面下载连接
+用Js在页面上添加一个下载的链接，通过这个链接就可以把当前的播放的mp3文件下载, 为了在能当面页面下载我们嵌入一个隐藏的iframe.
+
+
+
+
+全部代码：https://github.com/darlinglele/extensions/tree/master/fm
+
+
+
+                作者：u011459840 发表于2013-10-5 12:04:12 原文链接
+
+
+            阅读：770 评论：4 查看评论

@@ -1,0 +1,35 @@
+<img class="cover" src="/static/images/douban-fm-chrome-extension-loop.png" />
+<p>
+
+在前面的一篇博客《豆瓣FM电台Chrome扩展——下载》中， 介绍了一个下载当前音频的扩展功能。 有网友指出，是否可以考虑添加单曲循环的功能？ 我觉得这个功能很不错，之前如果遇到一首非常喜欢的歌曲，只能听一遍，感觉确实不太过瘾。 于是晚上开始动手完成了一下，添加一个“循环”的链接， 点击它可以保持当前的音乐单曲循环，想听过久听多久。要是听够了，点击“随机”，就恢复随机播放。效果图如下：
+</p>
+
+<h4>实现的思路：</h4>
+<p>
+分析页面发现，豆瓣fm每一次更换歌曲，是通过页面中的flash发送http 请求音频文件，由于我们不能够通过Javascript来控制flash发送的http请求，我们只好采取“偷梁换柱”的方法，把请求偷偷的换掉我们指定的文件，而且flash对此要一无所知，就像一次“中间人攻击”。 在chrome extension中可以大摇大摆的把所有的将要发起的request做手脚，这次我们只需要要更改它的URL：
+</p>
+
+<pre>
+chrome.webRequest.onBeforeRequest.addListener(
+    function (info) {
+        if(isRepeatMode && info.url.indexOf(".mp3")!=-1){
+          return {redirectUrl:current};
+        }
+        else if(info.url.lastIndexOf(".mp3")==info.url.length-4){
+            current = info.url+"?douban=";
+        }
+        return {cancel:false};
+
+    },
+    {
+        urls:[
+            "http://*.douban.com/*",
+            "http://douban.fm/*"
+        ]
+    },
+    ["blocking"]);
+</pre>
+<p>
+代码先判断是否是单曲模式，如果是则对.mp3的请求进行重定向，转向请求指定的音频url，这样就达到了单曲循环播放的效果！
+</p>
+全部代码：https://github.com/darlinglele/extensions/tree/master/fm

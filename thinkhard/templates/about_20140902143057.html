@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{%block main%}
+<div class="container-liquid">
+	<!-- Example row of columns -->
+	<div class="row">
+		<div class="col-md-2 no-right-padding right-border">
+
+		</div>              
+		<div class="col-md-8">
+			<!-- {% autoescape off %} {{note.content}} {%endautoescape%} -->
+			<div class="my-panel-group">
+				<div class="panel panel-default">
+					<div class="panel-heading" data-toggle="collapse" data-parent="#" href="#basic" style="cursor:hand">					
+						<span class='glyphicon glyphicon-user
+						'></span> 基本信息
+					</div>					
+					<ul id="basic" class="panel-collapse collapse in list-group"style="margin-bottom:0px">
+						<li class="list-group-item">林志雄，男， 27岁，福建莆田人，现居住于北京 </li>
+						<li class="list-group-item">手机: 13641165094</li>
+						<li class="list-group-item">邮箱: lessisawesome@gmail.com</li>
+						<li class="list-group-item">本科：陕西师范大学(211) 计算机科学与技术专业</li>				    
+						<li class="list-group-item">工作：2010年本科毕业——至今</li>				    
+					</ul>								
+				</div>
+
+				<div class="panel panel-default">
+					<div class="panel-heading" data-toggle="collapse" data-parent="#" href="#job" style="cursor:hand">
+						<span class='glyphicon glyphicon-road'></span> 工作经历
+					</div>
+					<div id="job" class="panel-collapse collapse in">
+						<table style="font-size:14px;" class="table">
+							<tr><th>#</th><th>公司名称</th><th>起始</th><th>结束</th><th>城市</th><th>职位</th></tr>
+							<tr><td>1</td><td><a href="">Objeciva</a></td><td>2010年3月</td><td>2011年8月</td><td>西安</td><td>软件工程师</td></tr>
+							<tr><td>2</td><td><a href="http://www.thoughtworks.com/cn/">ThoughtWorks</a></td><td>2011年8月</td><td>2012年3月</td><td>西安</td><td>软件工程师</td></tr>
+							<tr><td>3</td><td><a href="http://www.pwccn.com/home/chi/index_chi.html">普华永道</a></td><td>2012年4月</td><td>2014年4月</td><td>北京</td><td>软件工程师</td></tr>
+						</table>
+					</div>	
+				</div>
+				<!-- 项目经历 -->
+				<div class="panel panel-default">
+					<div class="panel-heading" data-toggle="collapse" data-parent="#" href="#project" style="cursor:hand">
+						<span class='glyphicon glyphicon-road'></span> 项目经历
+					</div>
+					<div id="project" class="panel-collapse collapse in">
+						<table style="font-size:14px;" class="table">
+							<tr><th>#</th><th>公司名称</th><th>项目名称</th><th>项目概况</th><th>职责描述</th></tr>
+							{%for project in resume.projects%}
+								<tr>
+									<td>{{forloop.counter}}</td>
+									<td> {{project.company}}</td><td>{{project.name}}</td> <td>{{project.overview}}</td><td>{{project.me}}</td>
+								</tr>
+							{%endfor%}								
+						</table>
+					</div>	
+				</div>
+								
+				<!--技术概览 -->
+				<div class="panel panel-default">
+					<div class="panel-heading" data-toggle="collapse" data-parent="#" href="#skill" style="cursor:hand">
+						<span class='glyphicon glyphicon-align-justify'></span> 技术概览
+					</div>
+					
+					<ul id="skill" class="list-group panel-collapse collapse in">
+						<li class="list-group-item">软件方法：多年的敏捷软件开发经验， 熟悉集成、重构和自动化测试等技术实践</li>
+						<li class="list-group-item">系统设计：主导过多个基于Asp.net的企业应用开发、集成和维护</li>
+						<li class="list-group-item">Web前端：对web前端技术很感兴趣，能够独立完成复杂UI的交互设计</li>
+						<li class="list-group-item">编程语言：熟悉Java、C#、Python、C 以及JavaScript等编程语言</li>				
+						<li class="list-group-item">技术框架：Asp.net mvc, spring mvc以及Django等web框架</li>
+						<li class="list-group-item">数据库：Sql server, MongoDB</li>
+						<li class="list-group-item">代码设计：掌握面向对象设计思想、函数式编程以及代码重构方法</li>
+						<li class="list-group-item">构建和测试： 熟悉NUnit, JUnit, Selenium, Cucumber, Ant 和 NAnt</li>
+						<li class="list-group-item">开发环境：熟悉Mac osx, Linux操作系统；熟悉Intellij idea（最懂程序员的IDE，我以为不为过）、Visutal studio和Vim</li>
+						<li class="list-group-item">其他工具：Github, SVN, Git 和 Linux useful commands</li>
+					</ul>				  					
+				</div>
+				<!-- 兴趣和方向 -->
+				<div class="panel panel-default">
+					<div class="panel-heading" data-toggle="collapse" data-parent="#" href="#interest" style="cursor:hand">
+						<span class='glyphicon glyphicon-star'></span> 感兴趣的技术
+					</div>
+					<div id="interest" class="panel-collapse collapse in">
+						<p style="padding:10px 10px;text-indent:25px">目前正在学习和关注的技术：数据挖掘、机器学习、分布式计算，是该技术领域的初学者，很希望有机会参与该领域相关的工作和研究。下面是我对该领域了解进度的概括，希望有机会得到前辈们的指导。 Ctrl+点击链接可以查看Github上Python(C/API)实现的部分代码。</p>
+
+						<table style="font-size:14px;" class="table">
+							<tr><th>#</th><th>分类</th><th>回归</th><th>聚类</th><th>关联分析</th><th>隐含语义分析</th><th>特征选择</th><th>预处理数据</th></tr>
+
+							<tr>
+								<td>1</td>
+								<td><a href="https://github.com/darlinglele/classification">感知器</a>、<a href="https://github.com/darlinglele/classification">K最近邻方法</a>、<a href="https://github.com/darlinglele/classification">朴素贝叶斯方法</a>、<a href="https://github.com/darlinglele/classification">逻辑回归</a>、<a href="https://github.com/darlinglele/classification">决策树</a></td>
+								<td><a href="https://github.com/darlinglele/regression">线性回归</a>、<a href="https://github.com/darlinglele/regression">逻辑回归</a></td><td><a href="https://github.com/darlinglele/clustering">K均值</a>、层次聚类</td>
+								<td><a href="https://github.com/darlinglele/relational">Apriori</a>，<a href="https://github.com/darlinglele/relational">FP-growth</a></td>
+								<td><a href="https://github.com/darlinglele/lda_topic_model">LDA主题模型(未完成)</a></td>
+
+								<td>VSM模型下的特征选择方法：TF-IDF，<a href="https://github.com/darlinglele/classification/tree/master/weighter">信息增益</a></td>
+								<td>缺失数据的处理， 数据标准化， <a href="https://github.com/darlinglele/breaker">中文分词</a>，<a href="/note/140931895351/">爬虫程序</a></td>
+							</tr>							
+						</table>
+					</div>				  			
+				</div>
+
+				<div class="panel panel-default">
+					<div class="panel-heading" data-toggle="collapse" data-parent="#" href="#intention" style="cursor:hand">					
+						<span class='glyphicon glyphicon-heart'></span> 自我评价和求职意向
+					</div>
+					<div id="intention" class="panel-collapse collapse in"  style="padding:10px 10px;text-indent:30px">	
+						<p>
+							我的性格活泼，思维敏捷，工作中表现很积极，具有很强的责任感和团队意识，除了技术也重视其他能力的培养；相比较于工作的理性、严谨，生活中的更多是感性、宽容，容易被一切美好的事物感动，我喜欢跑步，打篮球和羽毛球，平均每周2次超过1小时的运动量；我在学习上也从未停止脚步，作为机器学习领域的初学者，最近几个月都把自己埋在图书管里。我除了热爱学习技术也很爱玩，经常会做好玩有趣的事情，比如我用<a href="/note/140922341929/">树莓派做了遥控的车子</a>给自己玩，希望将来做个四轴飞行器给自己的小孩玩。
+						</p>
+						<p>							
+							我的求职意向是软件工程师，除了我所熟悉的技术外，我非常乐意去学没有接触过的但感兴趣的技术，最感兴趣的是机器学习或数据挖掘相关职位， 愿意服从调剂。 目前的月薪是14k， 期望最低月薪20k。
+						</p>
+					</div>	
+				</div>		
+				
+				<hr>										
+
+				<div class="panel panel-default">
+					<div class="panel-heading" data-toggle="collapse" data-parent="" href="#more" style="cursor:hand">					
+						<span class='glyphicon glyphicon-trash'></span> 生活照片
+					</div>
+					<div style="text-indent:30px" id="more" class="panel-collapse collapse in">			
+						<img width="100%" src="{% static "images/life.jpg" %}"/>						
+					</div>	
+				</div>
+			</div><!-- panel-group -->
+
+		</div>
+
+		<div class="col-md-2 no-right-padding right-border">
+
+		</div>
+{%endblock%}

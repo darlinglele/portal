@@ -1,0 +1,114 @@
+不久前我在微博上提出一个问题：众所周知，.NET中自带的List<T>集合类型没有“删除多个元素”的方法，那么假如我们是.NET类库中List<T>的实现者，我们该如何添加这么一个方法？例如：
+namespace System.Collections.Generic
+{
+    public class List<T>
+    {
+        private T[] _items;
+        private int _count;
+
+        public void RemoveMultiple(IEnumerable<T> itemsToRemove)
+        {
+            // Replace the implementation here
+            foreach (var item in itemsToRemove)
+            {
+                this.Remove(item);
+            }
+        }
+    }
+}
+其中元素保存在_items数组中，而_count则保存当前元素的个数。我这里给出了一个实现来体现这个方法的含义，但很显然这并不是一个合适的做法。原因有几个，一会儿会提到，但最重要的自然就是效率很低。请注意这里我们是“内部实现者”，因此肯定就是要提供一个高效的，并且尽可能通用的实现。
+有些同学表示如果要高效，则不应该用List<T>这种数据结构。这个思路似乎考虑周到，但实际上很让人捉急，因为这还是种代码“消费者”的习惯，而不是代码的“提供者”。记得以前我也提出过一些简单的题目，写明“抛出异常”，但大部分答案依旧在try...catch，我认为这是同样的原因。在我看来，假如要提高技术水平，一定要把思维观念从技术的“消费者”切换为“提供者”，因为提供者能影响更多人，会让自己对自己编写的代码要求更高。
+其实这道题目没有标准答案，但是很容易判断出某一个实现好不好，对不对，有哪些缺陷等等。这题的确十分简单，但是会有不少细节方面值得考虑，所以我反复强调，光有思路是不够的，一定要写出代码来。
+首先，我想代码判断了参数的合法性，也就是null与否。其次，您觉得该如何使用itemsToRemove比较合适？一定要从头枚举吗？这里举一个.NET中自带的例子：
+namespace System.Linq
+{
+    public static class Enumerable
+    {
+        public static int Count<TSource>(this IEnumerable<TSource> source)
+        {
+            checked
+            {
+                if (source == null)
+                {
+                    throw new ArgumentNullException("source");
+                }
+
+                var collection = source as ICollection<TSource>;
+                if (collection != null) return collection.Count;
+
+                var collection2 = source as ICollection;
+                if (collection2 != null) return collection2.Count;
+
+                int num = 0;
+                foreach (var item in source) num++;
+                return num;
+            }
+        }
+    }
+}
+可见，为了提高效率，有时候我们会考虑使用下标，而不是直接foreach来进行计算，因为如常见的数组或是List<T>这种枚举类型，使用下标访问的速度会比使用枚举器有一定程度的提高。另外，一般来说在使用IEnumerable的时候切忌多次遍历。
+假如我们使用最传统的foreach配合现成的Remove方法来实现RemoveMultiple方法，其时间复杂度是O(M * N)，其中N是目前List<T>中的元素个数，M是itemsToRemove中的元素数量。这种是最差的时间复杂度，原因是每删除itemsToRemove中的一个元素，就需要从整个列表的起始位置找起。于是，有些同学想到把被删除的元素放在一个HashSet中，这样确定单个元素是否需要删除的时间复杂度是O(1)，而构建这个HashSet的时间复杂度是O(M)，于是总共是O(M + N)，这显然比O(M * N)要好太多。
+但问题在于，HashSet是不够的，因为集合中的元素不可重复，而itemsToRemove中显然是可能有重复元素的，这意味着要从列表中删除多个相同的元素，这个需求也很正常，因为List<T>中本身就有可能重复。于是一个比较容易想到的做法便是建立一个字典，保存某个元素需要被删除的次数。装配脑袋的做法便是如此：
+public void RemoveMultiple(IEnumerable<T> itemsToRemove)
+{
+    var removingItems = new Dictionary<T, int>();
+
+    foreach (var item in itemsToRemove)
+    {
+        if (removingItems.ContainsKey(item))
+        {
+            removingItems[item]++;
+        }
+        else
+        {
+            removingItems[item] = 1;
+        }
+    }
+
+    var setIndex = 0;
+
+    for (var getIndex = 0; getIndex < _count; getIndex++)
+    {
+        var current = _items[getIndex];
+        if (removingItems.ContainsKey(current))
+        {
+            removingItems[current]--;
+            if (removingItems[current] == 0)
+            {
+                removingItems.Remove(current);
+            }
+
+            continue;
+        }
+
+        _items[setIndex++] = _items[getIndex];
+    }
+
+    _count = setIndex;
+}
+不过从细节上说，这个做法还是有些改进空间。例如，一次removingItems[item]++实际上就会访问两次字典，一次取值，一次是加一后设置回去，在此之前还有个ContainsKey判断。字典的读写操作理论上是O(1)，但实际上在内部会调用每个元素的GetHashCode方法，以及一次或多次Equals，这对于没有重载过这两个方法的引用类型，或是int等基础类型来说比较迅速，但假如T是一个字符串，开销还是会大上好几倍。因此，我们还是希望可以尽量少地访问字典。在我目前工作中的项目里，表示一个属性的可选方式是一个数字下标，这样很多地方就可以直接使用数组来保存与属性有关的映射关系，而不需要用PropertyInfo甚至更慢的字符串来查找字典。
+为了解决这个问题，最好是编写一个特定的数据结构——但并不“特殊”，因为这就是个典型的Bag（也称为MultiSet）)，顾名思义，便是允许重复元素的集合。在一个Bag中，相同元素可以被添加或删除多次。
+public void RemoveMultiple(IEnumerable<T> itemsToRemove)
+{
+    var removingItems = new HashBag<T>(itemsToRemove);
+
+    var setIndex = 0;
+
+    for (var getIndex = 0; getIndex < _count; getIndex++)
+    {
+        var current = _items[getIndex];
+        if (removingItems.Remove(current)) continue;
+
+        _items[setIndex++] = _items[getIndex];
+    }
+
+    _count = setIndex;
+}
+在HashBag内部，我们每次添加和删除元素只需要访问一次代码，便可以增加或删除该元素的计数器。封装一个通用的HashBag容器之后，连代码都变的简单很多。但是，使用基于哈希容器一般会占用相对比较大的空间，为了提高效率及节省空间，在可行的情况下，我们还可以为在创建HashBag的时候指定尺寸，或者权衡之下选用二叉树而不是基于哈希的Bag，这样时间复杂度会变成O(log(M) * N)，但空间使用可以节省许多。此外，我们还可以尝试建立一个现有元素至其下标的映射，先找出需要删除的位置，最后进行一次移动。这在不同的M和N大小关系时都是可能的选择。
+但问题是，这就足够了吗？以上这段实现实际上还有错误！请注意，最后我们虽然把setIndex赋值给_count，但是setIndex和旧的_count之间的元素，我们并没有设成null（确切地说应该是default(T)），这就会造成内存泄露。总有同学说托管程序不会出现内存泄露，这我不同意，托管程序还是程序，并不能阻止程序员犯错误嘛。不过话又说回来，我们一定需要将那些位置设为null吗？答案是否定的，对于像int等基础类型来说，我们就完全无需实现这点。
+不过话说回来，你会如何判断一个T是否需要设为null？是在RemoveMultiple内部每次判断下typeof(T)吗？答案依旧是否定的，只需要定义一个静态成员即可。要记住，List<int>和List<string>是两个不同的类型，它们的静态成员是分开存放的。这有时候会带来问题，但善加利用也会收到很好的效果。
+这些都是细节。
+其他还有一些值得考虑的有意思的地方。例如，您的实现如果遇上list.RemoveMultiple(list)这种用法，会出现什么样的情况？例如，itemsToRemove的数量假如远大于当前的元素数量，其代价是否过高？例如，假如itemsToRemove是一个无限长的枚举，但到某一个阶段却可以把所有当前元素删光，那么您的实现能否直接返回？
+这些都是RemoveMultiple方法可能会遇到的状况。我这里做出的假设是可以修改List<T>的内部实现，因此我们甚至可以开一个新的数组赋值给_items——假如它再某个情况下有帮助的话。当然，作为一个通用的实现的来说，一个方法应对大部分的情况就够了，我们无法顾及各种环境下的最坏情况。在实际情况下，有时候我们知道更多条件，甚至选择更合适的做法，并且使用反射从外部设置_item及_count。
+假如我用这道题目来进行面试，以上便是我会考察的一些思路。正像我一开始说的那样，这题没有标准答案，更关键的是对于思路的考察，考察一个程序员考虑问题是否全面。我虽然列举了那么多，但肯定也有我没有想到的地方。
+但是，光有思路是不够的，也一定要写出代码来。

@@ -1,0 +1,39 @@
+{% extends "note_base.html" %}
+{% load get_extras %}
+{% load staticfiles %}
+
+{%block head%}
+<title>随笔--Thinkhard</title>
+<link rel="stylesheet" type="text/css" media="all" href="{% static "css/style.css" %}">    
+{%endblock%}
+
+{%block note_main%}
+<div class="note_toolbar panel-heading ">
+
+                 <ol class="breadcrumb" style="padding:0 0 0 10px; margin:0px">
+                    <li><span class="glyphicon glyphicon-home"></span></li>
+                    <li><a href="/">首页</a></li>
+                    <li class="active">随笔</li>                    
+                  </ol>                                     
+            </div>    
+            <div style="padding-top:43px" class="item-list screen-height">    
+              {%for item in notes%}
+              <div class="container-liquid item item-read" id="{{item|get:'_id'}}">
+                <div class="row">
+                  <div class="col-md-2"><!-- <span class="glyphicon glyphicon-eye-open"></span>分类   -->{{item.category}}</div>
+                  <div class="col-md-4"><a href="/note/{{item|get:'_id'}}">{{item.title}}</a></div>
+                  <div class="col-md-3">
+                  {%for keyword in item.keywords%}
+                    <a style="color: gray" href="/note/tag/{{keyword}}">{{keyword}}</a> 
+                  {%endfor%}
+                  </div>             
+                  <div class="col-md-1">{{item.author}}</div>
+                  <div class="col-md-2">
+                    2013年11月2日 <!-- <a href="/note/edit/{{item|get:'_id'}}">编 辑</a> -->
+                  </div>
+                  
+                </div>  <!-- row -->
+              </div>     
+            {%endfor%}          
+            </div>          
+{%endblock%}

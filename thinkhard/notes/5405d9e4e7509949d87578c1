@@ -1,0 +1,68 @@
+通过修改代码给已有的类型增加功能是最直接的方式。 但往往有很多原因让这种方式被重新考虑：
+
+
+JDK或者第三方类库，无论如何你都要考虑其他方式，而不是直接修改。新增的职责不适合被添加到现有的任何一个类型中。
+
+通过继承在很多情况下是个容易想到的方式。比如，增加子类来获得新的类型，在新的子类当中可以增加很妙的新功能。假如这个功能果实在很妙，于是其它已有的子类（兄弟）也希望获得这样的功能，问题就出现了：
+
+
+为了让所有的兄弟类型也拥有这样的功能，要么修改兄弟类型（违反开闭原则和面临直接修改的问题）， 要么通过子类来扩展。这个新功能如果会发生独立的变化，这种变化传递到已有的代码中，使已有类型变化维度增加，子类数量快速膨胀。
+因此，在不改变已有的代码的前提下，我们再来考虑如何增加新功能。如前面所说，通过继承每一个渴望新功能的子类就会产生相同数量的新子类。 通过观察这些膨胀的子类发现：
+
+
+
+除了继承的父类不同，新增的功能代码完全相同。 既然如此，这些子类之间存在着重复的代码（逻辑或数据）。 对于重复的代码，我们一般想到的是把代码块抽取成方法，并通过传递参数来调用。 我们这些继承的子类之间，父类是唯一的不同，因此考虑把父类对象参数来传递。 如果把继承体系中的父类抽出去，失去继承，所有的父类功能也就无法得到继承。 但此时我们决定把父类对象当做一个参数传递到子类，通过这个对象，可以把不能从父类继承的功能通过组合的方式得到。 由于不是通过继承，但拥有父类的功能，为此可以给它们指定相同的接口。
+
+这种设计就是Decorator模式，可以动态的给已有的对象增加功能。Java JDK当中，Decorator模式比比皆是，我这里摘取其中的一个例子：
+
+public abstract class InputStream implements Closeable {
+	public abstract int read() throws IOException;
+	//省略其他的功能
+}
+
+public class FilterInputStream extends InputStream {
+	 protected FilterInputStream(InputStream in) {
+        	this.in = in;
+   	 }
+	public int read() throws IOException {
+       	 	return in.read();
+   	 }
+	//省略其他的功能
+}
+
+public class BufferedInputStream extends FilterInputStream {
+	 public BufferedInputStream(InputStream in) {
+       		super(in);
+    }
+	//从这里开始，增加或者修改功能
+	public synchronized int read() throws IOException {
+        if (pos >= count) {
+            fill();
+            if (pos >= count)
+                return -1;
+        }
+        return getBufIfOpen()[pos++] & 0xff;
+    }
+}
+
+
+InputStream 是一个输入流的抽象类，它的各种子类仅支持基本的read功能。 对于文件的读取添加buffer的功能会大大提高效率， 因此希望这个独立的功能被应用到所有的InputStream当中。为了获得这个功能，Java JDK并不是通过修改已有的InputStream，而是通过一个新的继承类BufferedInputStream来完成这个新的职责。 这样也符合开闭原则。
+BufferedInputStream在构造实例时，把InputStream实例作为构造函数的一个参数，如此，BufferedInputStream的实例就可以拥有了InputStream实例的具体功能(这些职责是由父类FilterInputStream来承担的，这样BufferedInputStream就可以专心做自己的本职工作) 。 换句话说InputStream实例获得BufferedInputStream类型当中的新功能。
+有一点不太明白，FilterInputStream难道就真的是在帮BufferedInputSream完成继承InputStream的功能吗？额外添加这样一个类，是否值得？ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+                作者：u011459840 发表于2013-7-20 14:57:26 原文链接
+
+
+            阅读：221 评论：0 查看评论

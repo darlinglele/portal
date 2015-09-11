@@ -1,0 +1,77 @@
+前面讲过Java中Null表示空对象时带来NullPointerException的问题，以及解决这些问题的几种办法。其中之一就是使用Optional，今天我们要来了解更多的Optional的使用方法。
+从下面这段简单的代码开始：
+
+    public String getName() {
+        Company company = getCompany();
+        if (company != null) {
+            if (company.founder != null) {
+                return company.founder.name;
+            } else
+                return null;
+        } else
+            return null;
+    }
+代码的意图是从一个Company实例中取出founder的name。 这样简单的逻辑，却用 If 嵌套来防止Null带来的NullPointerException，显然啰嗦，但似乎也无可奈何了。当然你会改写一下程序来减少代码行数：
+
+
+    public String getName() {
+        Company company = getCompany();
+        return company != null ? company.founder != null ? company.founder.name : null : null;
+    }
+上面的代码看起来已经没有什么可以挑剔的了，但是我们会发现一半的逻辑在做与方法无关Null的判断，而真正的逻辑却被淹没在这些副作用当中。我们现在就用Optional的一些技巧来移除Null判断，让程序只关心真正的逻辑。 
+
+
+
+步骤1： 找出可空（nullable）对象（例如company），用Optional.empty() 来代替Null， Optional.of(T) 来代替非空对象，这样我们处理的对象就不可能为Null了。步骤2： 提供一种用来访问可空对象的操作，如果可空对象为empty，直接返回empty。如果不为空，则执行操作，返回Optional.ofNullable(o)。步骤3： 重复步骤2，直至得到最终结果。
+
+
+
+所以，首先要让getCompany()方法返回一个Optional<Company> company, 然后根据步骤2，给company绑定一个提取founder的操作，并且把founder包装成一个Optional<Founder>，为此我们需要一个绑定操作到某个可空对象的方法:
+
+public class Optionals {
+    static <V, R> Optional<R> bind(Optional<V> optional, Function<V, R> function) {
+        if (optional.isPresent())
+            return Optional.ofNullable(function.apply(optional.get()));
+        else
+            return Optional.empty();
+    }
+}
+
+上面的方法就是绑定一个function到一个可空的对象，如果可空对象存在，则调用function，否则就直接返回空。所以，在取name的过程中，company或者founder为Optional.empty(), 我们也仍然可以绑定function到它们，而无须判断。这些判断完全交给了bind来做，我们只需要关心萃取的逻辑,想在代码就可以编程这样：
+
+
+
+Optional<String> name= bind(bind(getCompany(), c -> c.founder), f -> f.name);
+
+怎么样代码看起更少了，也彻底甩掉了Null这个累赘。在看看这个递归调用，很熟悉不是吗？多像Scheme中写Labmda 表达式！这是纯函数式编程的风格，但对于Java来说，我们希望这个绑定function的操作能在放在对象上来，而不需要借助Optionals.bind这样一个第三者。所以我们想办法给我们Optional<V> 对象添加绑定操作的功能，这个简单，我们很容易想到各种增加功能的设计模式：你可以直接继承Optional<V>或者用一个新的类型来装饰Optional<V>, 这里我们就用Decorator
+ 模式来实现：
+public class StreamOptional<V> extends AbstractStreamOptional<V> {
+
+    public StreamOptional(Optional<V> optional) {
+        super(optional);
+    }
+
+    static <R> StreamOptional<R> from(Optional<R> optional) {
+        return new StreamOptional(optional);
+    }
+
+    public <R> StreamOptional<R> bind(Function<V, R> function) {
+        if (this.isPresent()) {
+            return StreamOptional.from(Optional.<R>ofNullable(function.apply(this.get())));
+        } else
+            return StreamOptional.from(Optional.<R>empty());
+    }
+然后我们再来实现上面例子，代码就变成这样：
+StreamOptional<String> name = from(getCompany()).bind(company -> company.founder).bind(founder -> founder.name);
+
+
+其中From函数用来包装Optional成StreamOptional, StreamOptional的bind返回另一个StreamOptional，这样就可以像流一样按照顺序操作它们。和之前Optionals.bind的递归调用不同，这种链式调用过程不会积累调用栈，而且同样无须担心Null的问题。
+总结： 在对可空对象的处理时，为避免做无关的事情，绑定操作到这个对象上，这种做法其实来源了Monad模型，在一个数据上赋予一系列的计算过程的，可以像管道一样处理数据。无论是函数风格还是链式调用，都体现到了这一点。
+
+
+
+
+                作者：u011459840 发表于2013-9-8 12:08:29 原文链接
+
+
+            阅读：251 评论：0 查看评论

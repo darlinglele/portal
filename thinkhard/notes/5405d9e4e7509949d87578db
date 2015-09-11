@@ -1,0 +1,70 @@
+两个礼拜前我公开了一个抓取今年MSDN Magazine内容的calibre脚本，这次则是针对InfoQ的。最近用Kindle Paperwhite看书一发不可收拾，自然想要更好地利用这个设备。InfoQ是一个难得的高质量站点，可惜它的RSS只输出摘要，甚至只有前十条内容，让人感到十分不方便。但这显然难不住calibre这个电子书管理神器和伟大的程序员，于是我这段时间又断断续续地编写了InfoQ站点内容的抓取脚本，各个方面细节感觉修饰地都还算不错，特此公布。至于这个脚本该怎么用，就请自行看下calibre的帮助吧。
+为了更好的使用这段脚本，我这里也再稍微谈下部分细节。这个脚本最一开始是一些配置：
+language = 'en'
+
+site_url = 'http://www.infoq.com/'
+
+title_prefix = 'InfoQ'
+
+date_regexes = [
+    r'Jan\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'Feb\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'Mar\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'Apr\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'May\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'Jun\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'Jul\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'Aug\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'Sep\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'Oct\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'Nov\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'Dec\s+(?P<day>\d{2}),\s+(?P<year>\d{4})'
+]
+这些代码记录了抓取目标的一些信息，包括用来匹配日期用的正则表达式。显然这些配置的目标是InfoQ英文主站，假如要针对InfoQ中文站，则只需将下面这段注释去掉即可：
+language = 'zh'
+
+site_url = 'http://www.infoq.com/cn/'
+
+title_prefix = 'InfoQ中国站'
+
+date_regexes = [
+    r'一月\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'二月\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'三月\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'四月\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'五月\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'六月\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'七月\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'八月\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'九月\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'十月\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'十一月\s+(?P<day>\d{2}),\s+(?P<year>\d{4})',
+    r'十二月\s+(?P<day>\d{2}),\s+(?P<year>\d{4})'
+]
+再接下来则是配置网站中哪些部分的内容是需要抓取的，目前InfoQ有三个主要的文字部分，分别是“新闻（news）”，“文章（articles）”和”访谈（interviews）“，您可以只保留需要抓取的部分，每个部分会作为这本书的一个“章节”来对待。
+# sections to download
+sections = [ 'news', 'articles', 'interviews' ]
+最后则是每个部分所需要抓取的时间范围，每个时间范围均为一个二元tuple，表示起始日期和终止日期，方便起见均为“闭区间”，换句话说假如您要抓取当天的内容，则使用(date.today(), date.today())即可。除了统一的时间范围之外，您还可以为不同的部分指定不同的时间范围：
+# the range of date (both inclusive) to download
+date_range = (date(2013, 6, 20), date(2013, 6, 22))
+
+# the range of date to override for sections
+section_date_ranges = {
+    # 'news: (date(2013, 6, 21), date(2013, 6, 22)),
+    # 'articles': (date(2013, 6, 5), date(2013, 6, 10)),
+    # 'interviews': (date(2013, 1, 1), date(2013, 3, 1))
+}
+至于剩下的部分，我就不多解释了，总之就是分析页面，获取每一篇文章的基本数据，生成索引脚本calibre的框架即可。还有一部分代码是用来从一张页面的DOM信息中挑选出可读的部分，顺便我必须吐槽，InfoQ改版后的HTML还是那么糟糕，对Readability的支持还是很差，只能由我进行自定义分析了，且分析起来也很麻烦。总之，假如您不知道这些代码在作什么，建议您不要轻易改动。当然，代码其实很简单，感兴趣的话也不妨试着理解一下那是最好的了。
+我是这么用这个脚本的：首先，我抓取了最近半年来所有的内容放着慢慢回顾，当然只仔细看那些感兴趣的部分，大部分时间是刷刷地翻，这比直接阅读InfoQ网页效率高出何止一星半点。然后，保留一个脚本，每天早上定时抓取前一天发布的内容（使用date.today() - timedelta(days = 1)作为时间范围的上下限），并使用Amazon的文档服务推送到Kindle设备上阅读。
+我抓取了两个mobi格式的示例文档（中英文各一），感兴趣的朋友可以下载来看看，可以直接用PC/Mac/iOS/Android上的Kindle阅读器打开，也可以使用calibre自带的或其他mobi文档阅读器，这里我只贴出Kindle Paperwhite的截图。
+主索引：
+ 
+块状索引：
+   
+列式索引：
+ 
+新闻内容：
+   
+访谈内容：
+     
+Kindle Paperwhite实在是个好东西，绝对推荐大家购买。

@@ -1,0 +1,59 @@
+今天看到一个面试题是这样的：
+
+var a = 10;
+
+function test() {
+	a = 5;
+	alert(a);
+	alert(this.a);
+	var a;
+	alert(this.a);
+	alert(a);
+}
+
+请问test(), new test() 的返回值分别是？
+正确答案是：5, 10, 10, 5和 5, undefined, undefined, 5 
+我的答案：5，5，5，undefined和 5, undefined, undefined, 5
+要不是这道题，我一直误以为JavaScript是顺序的解释执行， 声明部分一定要在调用之前， 然而这是一个误区，必要的时还要“张前顾后”。 事实上作用域内的声明无论在那里，被提前到开始的部分， 上面的代码实际同：
+
+var a = 10;
+
+function test() {
+	var a;
+	a = 5;
+	alert(a);
+	alert(this.a);
+	alert(this.a);
+	alert(a);
+}
+
+
+再如：
+
+var a = 0;
+
+function test() {
+	a = 5;
+	alert(a);
+	var a = 10;
+	alert(a)
+}
+等同于：
+
+
+var a = 0;
+
+function test() {
+	var a;
+	a = 5;
+	alert(a);
+	a = 10;
+	alert(a)
+}
+上面的代码都会输出5，10
+
+
+                作者：u011459840 发表于2014-5-4 11:40:18 原文链接
+
+
+            阅读：87 评论：0 查看评论

@@ -1,0 +1,54 @@
+文首先给出个例子来探究下什么是实例变量初始化器，什么是实例初始化器，以及什么是静态初始化器。然后看看实例初始化器是怎么工作的。
+1. 执行的顺序
+先看看下面这段代码，你觉着哪部分会先被执行呢？
+public class Foo {
+ 
+    //instance variable initializer 实例变量初始化器
+    String s = "abc";
+ 
+    //constructor 构造函数
+    public Foo() {
+        System.out.println("constructor called");
+    }
+ 
+    //static initializer   静态初始化器
+    static {
+        System.out.println("static initializer called");
+    }
+ 
+    //instance initializer 实例变量初始化器
+    {
+        System.out.println("instance initializer called");
+    }
+ 
+    public static void main(String[] args) {
+        new Foo();
+        new Foo();
+    }
+}
+输出如下：
+static initializer called
+instance initializer called
+constructor called
+instance initializer called
+constructor called
+2. Java的实例初始化器是如何工作的？
+上面的例子中的实例初始化器包含一段打印字符的代码。要理解它是如何工作的，我们可以把它想象成变量赋值的过程，这样就不难理解了。
+除了这么赋值：
+int b = 0;
+还可以这么写：
+int b;
+b = 0;
+因此，实例初始化器和实例变量初始化器就大同小异了。
+3. 什么时候会用到实例初始化器？
+能用到实力初始化器的时候比较少。但有些时候还是一个实例变量初始化器的替代选择，比如：
+
+初始化代码必须处理异常情况   
+执行一个实例变量没办法进行的计算   
+
+当然，这些需求还是可以在构造函数中实现的。但是一个类有多个构造函数的话，你就得在每个构造函数里面重复同样的代码了。
+写在实例初始化器中的代码，无论你使用哪一个构造函数，实例初始化器中代码都会被执行（可能说的多，用的少吧）。
+另一个实例初始化器的应用场景是匿名内部类，因为这种情况下根本就不能创建构造函数。（这可能是放置日志代码的好地方？）
+参考：Java的初始化
+首发：strongme
+相关文章在Java中如何使用transientJava为什么需要保留基本数据类型8张图理解JavaPOJO中使用ThreadLocal实现Java嵌套事务Java问答：终极父类（2）—下篇Java问答：终极父类（2）—上篇Java for-each循环解惑115个Java面试题和答案——终极列表（上）115个Java面试题和答案——终极列表（下）Java中弱引用、软引用、虚引用及强引用的区别

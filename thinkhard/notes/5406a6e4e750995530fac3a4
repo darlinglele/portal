@@ -1,0 +1,159 @@
+Java 8中的java.util.zip.ZipFile包中提供了stream方法，能够非常容易的获取ZIP压缩包中的条目。在这篇文章中，我会通过一系列的示例来展示我们可以非常快速的遍历ZIP文件中的条目。
+注意：为了在这篇博客中做演示，我从GitHub上以ZIP文件的形式下载了我的一个项目，放在了c:/tmp目录下。
+Java7之前的做法
+在Java7之前，读取一个ZIP文件中的条目的做法，恩……需要一点点小技巧。当你看到下面的代码的时候，大概就会开始有点讨厌Java了。
+
+public class Zipper {
+    public void printEntries(PrintStream stream, String zip)  {
+        ZipFile zipFile = null;
+        try {
+            zipFile = new ZipFile(zip);
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry zipEntry = entries.nextElement();
+                stream.println(zipEntry.getName());
+            }
+        } catch (IOException e) {
+            // error while opening a ZIP file
+        } finally {
+            if (zipFile != null) {
+                try {
+                    zipFile.close();
+                } catch (IOException e) {
+                    // do something
+                }
+            }
+        }
+    }
+}
+
+Java 7的做法
+多谢有了try-with-resources这样新的try代码块的写法，在Java 7中的代码变得稍微好了一些，但我们还是被“强迫”来使用Enumeration来遍历ZIP压缩包中的条目：
+
+public class Zipper {
+    public void printEntries(PrintStream stream, String zip) {
+        try (ZipFile zipFile = new ZipFile(zip)) {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry zipEntry = entries.nextElement();
+                stream.println(zipEntry.getName());
+            }
+        } catch (IOException e) {
+            // error while opening a ZIP file
+        }
+    }
+}
+
+使用Strean API
+真正有意思的是从Java 8开始，Java 8提供在java.util.zip.ZipFile包中提供新的stream方法，能够返回ZIP压缩包中的条目的有序的流，使得Java在处理ZIP压缩包时有了更多的选择。前文提到的读取压缩包的条目的代码可以改写成如下简单的形式：
+
+public class Zipper {
+    public void printEntries(PrintStream stream, String zip) {
+        try (ZipFile zipFile = new ZipFile(zip)) {
+            zipFile.stream()
+                    .forEach(stream::println);
+        } catch (IOException e) {
+            // error while opening a ZIP file
+        }
+    }
+}
+
+如下文所示，有了Stream API，我们有了更多更有趣的方式来处理ZIP文件。
+对ZIP压缩包的内容进行过滤和排序
+
+public void printEntries(PrintStream stream, String zip) {
+    try (ZipFile zipFile = new ZipFile(zip)) {
+        Predicate<ZipEntry> isFile = ze -> !ze.isDirectory();
+        Predicate<ZipEntry> isJava = ze -> ze.getName().matches(".*java");
+        Comparator<ZipEntry> bySize = 
+                (ze1, ze2) -> Long.valueOf(ze2.getSize() - ze1.getSize()).intValue();
+        zipFile.stream()
+                .filter(isFile.and(isJava))
+                .sorted(bySize)
+                .forEach(ze -> print(stream, ze));
+    } catch (IOException e) {
+        // error while opening a ZIP file
+    }
+}
+
+private void print(PrintStream stream, ZipEntry zipEntry) {
+    stream.println(zipEntry.getName() + ", size = " + zipEntry.getSize());
+}
+
+在迭代ZIP压缩包的条目时，我检查了这个条目是否是一个文件并且是否匹配一个给定的字段（为了简单，直接把匹配字段硬编码在代码中了），然后利用一个给定的比较器，对这些条目按照大小进行了排序。
+为ZIP压缩包创建文件索引
+在这个例子中，我把ZIP压缩包中的条目按照文件名的首字母分组，建立形如Map<String, List<ZipEntry>>的索引，预想的结果应该看起来像这样简单：
+
+a = [someFile/starting/with/an/A]
+u = [someFile/starting/with/an/U, someOtherFile/starting/with/an/U]
+
+同样，使用Stream API来实现这个功能非常简单：
+
+public void printEntries(PrintStream stream, String zip) {
+    try (ZipFile zipFile = new ZipFile(zip)) {
+        Predicate<ZipEntry> isFile = ze -> !ze.isDirectory();
+        Predicate<ZipEntry> isJava = ze -> ze.getName().matches(".*java");
+        Comparator<ZipEntry> bySize =
+            (ze1, ze2) -> Long.valueOf(ze2.getSize()).compareTo(Long.valueOf(ze1.getSize()));
+
+        Map<String, List<ZipEntry>> result = zipFile.stream()
+                .filter(isFile.and(isJava))
+                .sorted(bySize)
+                .collect(groupingBy(this::fileIndex));
+
+        result.entrySet().stream().forEach(stream::println);
+
+    } catch (IOException e) {
+        // error while opening a ZIP file
+    }
+}
+
+private String fileIndex(ZipEntry zipEntry) {
+    Path path = Paths.get(zipEntry.getName());
+    Path fileName = path.getFileName();
+    return fileName.toString().substring(0, 1).toLowerCase();
+}
+
+在ZIP压缩包的文件中查找字段
+在这最后一个例子中，我在压缩包中的查找所有以.java结尾的且包含@Test字段的文件，这次，我将利用BufferedReader类的lines方法来实现，这个lines方法按行返回文件流。
+
+public void printEntries(PrintStream stream, String zip) {
+
+    try (ZipFile zipFile = new ZipFile(zip)) {
+        Predicate<ZipEntry> isFile = ze -> !ze.isDirectory();
+        Predicate<ZipEntry> isJava = ze -> ze.getName().matches(".*java");
+
+        List<ZipEntry> result = zipFile.stream()
+                .filter(isFile.and(isJava))
+                .filter(ze -> containsText(zipFile, ze, "@Test"))
+                .collect(Collectors.toList());
+
+        result.forEach(stream::println);
+
+
+    } catch (IOException e) {
+        // error while opening a ZIP file
+    }
+}
+
+private boolean containsText(ZipFile zipFile, ZipEntry zipEntry, String needle) {
+    try (InputStream inputStream = zipFile.getInputStream(zipEntry);
+         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+
+        Optional<String> found = reader.lines()
+                .filter(l -> l.contains(needle))
+                .findFirst();
+
+        return found.isPresent();
+
+    } catch (IOException e) {
+        return false;
+    }
+}
+
+总结
+在我看来，Stream API提供了一个强大的并且相对更容易的方案来解决遍历ZIP压缩包中的条目的问题。
+本文中出现的例子只是用来演示说明Stream API的用法的，都是相对容易的，但我希望你能够喜欢这些例子，并且觉得他对你有用。
+引用
+http://docs.oracle.com/javase/tutorial/index.html
+相关文章更好的异常处理：实现JUnit APIJava 8新特性终极指南使用ReentrantLock和Lambda表达式让同步更纯净Java 8：CompletableFuture终极指南JDK8新增便利的Map默认值方法为什么Java 8存在接口污染Java 8会给你的代码带来什么：一个实际的例子Java8采用Martin Fowler的方法创建内部DSLJava8-本地缓存为什么在密码问题上char[]优先于String？

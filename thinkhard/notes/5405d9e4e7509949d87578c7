@@ -1,0 +1,136 @@
+     九月十月百度，迅雷，华为，阿里巴巴，最新校招笔试面试六十题题记    本博客自2010年10月11日开通以来，已经帮助了一大批人找到工作，特别是连续三年在每一年的9、10月份陪伴了至少三届毕业生找工作的旅程，包括校招中的笔试面试，今年也不会例外，我会在本博客开通3周年之际一如既往的陪伴大家一起成长。    本文所整理的全部笔试面试题要么来源于我群内群友们的分享，要么摘自论坛或博客，所有原题均来自网络。虽然本文中整理的绝大部分笔试面试题偏算法（自己特意为之之故），但不论是哪一年的校招，一般说来，笔试偏基础（尤其是选择题部分，涵盖语言，计算机组成原理、操作系统、网络协议、数据库、概率期望等知识），而面试则偏算法（且极具针对性的根据简历提问），且无论是笔试还是面试，两者都很看重你的实际编程能力，希望大家知晓。   OK， 本文会尽量保持每天更新一道新的笔试或面试题，直到校招基本结束（更欢迎各位通过微博私信http://weibo.com/julyweibo，或邮箱zhoulei97@aliyun.com提供题目，亦可直接评论于本文下），如果大家对以下任何一题中有任何思路，包括参考题解中有任何错误，欢迎随时评论于本文之下，或show me your code！谢谢。九月迅雷，华为，阿里巴巴，最新笔试面试十题8月15日，百度2道面试题：1、来自《编程之美》的概率题：一个桶里面有白球、黑球各100个，现在按下述规则取球：的    i 、每次从通里面拿出来两个球；    ii、如果取出的是两个同色的求，就再放入一个黑球；    ii、如果取出的是两个异色的求，就再放入一个白球。问：最后桶里面只剩下一个黑球的概率是多少？2、算法题：给你一个自然数N，求[6,N]之内的所有素数中，两两之和为偶数的那些偶数。9月5日，华为2014校园招聘的机试题目通过键盘输入一串小写字母(a~z)组成的字符串。请编写一个字符串压缩程序，将字符串中连续出席的重复字母进行压缩，并输出压缩后的字符串。压缩规则：    1、仅压缩连续重复出现的字符。比如字符串"abcbc"由于无连续重复字符，压缩后的字符串还是"abcbc"。    2、压缩字段的格式为"字符重复的次数+字符"。例如：字符串"xxxyyyyyyz"压缩后就成为"3x6yz"。要求实现函数：      void stringZip(const char *pInputStr, long lInputLen, char *pOutputStr);    输入pInputStr：  输入字符串lInputLen：  输入字符串长度    输出 pOutputStr： 输出字符串，空间已经开辟好，与输入字符串等长；注意：只需要完成该函数功能算法，中间不需要有任何IO的输入输出示例     输入：“cccddecc”   输出：“3c2de2c”    输入：“adef”     输出：“adef”    输入：“pppppppp” 输出：“8p”9月6日，网新恒天2014校园招聘笔试编程题已知memcpy的函数为： void* memcpy(void *dest , const void* src , size_t count)其中dest是目的指针，src是源指针。不调用c++/c的memcpy库函数，请编写memcpy。点评：老题，参考答案如下//copyright@July 2013/9/24
+void* memcpy(void *dst, const void *src, size_t count)    
+{    
+	//安全检查
+	assert( (dst != NULL) && (src != NULL) );    
+
+	unsigned char *pdst = (unsigned char *)dst;    
+	const unsigned char *psrc = (const unsigned char *)src;    
+
+	//防止内存重复
+	assert(!(psrc<=pdst && pdst<psrc+count));    
+	assert(!(pdst<=psrc && psrc<pdst+count));    
+
+	while(count--)    
+	{    
+		*pdst = *psrc;    
+		pdst++;    
+		psrc++;    
+	}    
+	return dst;    
+}  9月9日，迅雷2014校招笔试编程题：已知集合A和B的元素分别用不含头结点的单链表存储，函数difference()用于求解集合A与B的差集，并将结果保存在集合A的单链表中。例如，若集合A={5,10,20,15,25,30}，集合B={5,15,35,25}，完成计算后A={10,20,30}。链表结点的结构类型定义如下：struct node  
+{  
+	int elem;  
+	node* next;  
+};  请完成函数void difference(node** LA , node* LB)点评：参考答案或更多题目请参见：http://blog.csdn.net/hackbuteer1/article/details/11482103。9月10日，美团网2014校招研发笔试哈尔滨站1、链表翻转。给出一个链表和一个数k，比如链表1→2→3→4→5→6，k=2，则翻转后2→1→4→3→6→5，若k=3,翻转后3→2→1→6→5→4，若k=4，翻转后4→3→2→1→5→6，用程序实现点评：类似编程艺术第1章左旋转字符串，见：http://blog.csdn.net/v_JULY_v/article/details/6322882。2、一个m*n的矩阵，从左到右从上到下都是递增的，给一个数elem，求是否在矩阵中，给出思路和代码点评：杨氏矩阵查找，见编程艺术第23章：http://blog.csdn.net/v_july_v/article/details/7085669。9月14日，阿里巴巴2014校招笔试哈尔滨站1、宿舍内5个同学一起玩对战游戏。每场比赛有一些人作为红方，另一些人作为蓝方。请问至少需要多少场比赛，才能使任意两个人之间有一场红方对蓝方和蓝方对红方的比赛？答案为4场，参考如下图，作者doc_sgl：点评：其余题目请参见：http://blog.csdn.net/doc_sgl/article/details/11695671。2、一个有10亿条记录的文本文件，已按照关键字排好序存储。请设计算法，可以快速的从文件中查找指字关键字的记录。9月14日，阿里巴巴-系统工程师-北京站其它题目请参见：http://blog.csdn.net/lingfengtengfei/article/details/12344511。9月16日，创新工场2014校招笔试题点评：上面第3题还是杨氏矩阵查找，见编程艺术第23章：http://blog.csdn.net/v_july_v/article/details/7085669。既然这么多公司都喜欢考杨氏矩阵查找，那么再给出杨氏矩阵查找一题的扩展：给定 n×n 的实数矩阵，每行和每列都是递增的，求这 n^2 个数的中位数，分析详见：http://zhiqiang.org/blog/science/computer-science/median-algorithm-of-ordered-matrix.html。9月21日，百度2014校招-济南站9月21日，腾讯2014软件开发校招-简答题-广州点评：这里有一关于上面2题的题解：http://blog.csdn.net/thebestdavid/article/details/12056293，可以参考。9月22日，人人校招笔试题点评：上述第1题寻找满足条件的两个数，见编程艺术第5章：http://blog.csdn.net/v_JULY_v/article/details/6419466；上述第2题见编程艺术第21章：http://blog.csdn.net/v_july_v/article/details/6890054。9月22日，阿里巴巴北邮站点评：这里有一朋友关于上述3题的题解：http://blog.csdn.net/thebestdavid/article/details/11975809，大家可以参考。9月23日，网易电商部-社招面试HashMap与HashTable区别点评：HashMap基于Hashtable实现，不同之处在于HashMap是非同步的，并且允许null，即null value和null key，Hashtable则不允许null，详见：http://oznyang.iteye.com/blog/30690。此外，记住一点：hashmap/hashset等凡是带有hash字眼的均基于hashtable实现，没带hash字眼的如set/map均是基于红黑树实现，前者无序，后者有序，详见此文第一部分：http://blog.csdn.net/v_july_v/article/details/7382693。不过，估计还是直接来图更形象点，故直接上图（图片来源：本人9月28日在上海交大面试&算法讲座的PPThttp://vdisk.weibo.com/s/zrFL6OXKg_1me）：9月24日，去哪儿网2014校招西安站笔试题给定一个200MB的文本文件，里面存的是IP地址到真实地址信息的映射信息，例如：211.200.101.100 北京然后给你6亿个IP地址，请设计算法快速的打印出所对应的真实地址信息。9月25日，阿里巴巴二面指针/数组区别，决策树训练原理，SVM原理，网络协议，堆排序，字符串转换成整数，设计一款拼音输入法等等..点评：字符串转换成整数看似简单，实则很多坑，要写好并不容易，具体分析和实现见编程艺术第30章：http://blog.csdn.net/v_july_v/article/details/9024123；决策树见：http://blog.csdn.net/v_july_v/article/details/7577684；SVM原理见：http://blog.csdn.net/v_july_v/article/details/7624837。总结：此次面试的这位同学面的还是堆排/快排/atoi等典型问题，实际上：①面试看基础算法编程能力，和准备是否充分；②不论结果如何，跟4年前高考一样，高考和面试都只是人生路上的其中一站。你的真正核心竞争力不是进哪所名校哪所名企，而是存在你骨子里的上进心或热爱钻研技术的态度。9月28日，微软2014校招笔试题最后一道点评：上题形式上类似编程艺术第35章完美洗牌算法http://blog.csdn.net/v_july_v/article/details/10212493#t8，但因给定的是链表，所以相对来说，简单了不少；微软2014校招其它题目见：http://blog.csdn.net/xiaoerlyl/article/details/12126807。9月28日，百度2014校招-武汉站-系统分析师10月2日，暴风影音2014校招笔试1、合并两个已经排序的单链表为一个排序的单链表，相同内容只保留一个如：单链表a:1->2->3->4单链表b:3->4->5输出：1->2->3->4->52、编写程序，在原字符串中把尾部m个字符移动到字符串的头部，要求：长度为n字符串操作时间复杂度为O(n),时间复杂度为O(1)。如：原字符串为”Ilovebaofeng”，m=7，输出结果：”baofengIlove”。点评：还是类似编程艺术第1章左旋字符串：http://blog.csdn.net/v_JULY_v/article/details/6322882。3、暴风影音的片源服务器上保存着两个文件a和b，各存放50亿条URL，每条URL占用64字节，内存限制是4G，让你找出a,b文件共同的URL。要求：算法设计。点评：上述第3题等海量数据处理面试题，请参见此文第第一部分第6题：http://blog.csdn.net/v_july_v/article/details/7382693。关于linux内核的几个面试问题：1、Linux中主要有哪几种内核锁？2、Linux中的用户模式和内核模式是什么含意？3、用户进程间通信主要哪几种方式？4、有哪几种内存分配函数？ 微软一面：输入两个数，相加求和，二进制输出。阿里巴巴面试：阿里的log文件如下，有三个字段：time（登陆或登出时间点）+uid+login或logout，每条记录按时间顺序排列。问题如下：给定一个时间点T，统计在线人数。 点评：参考分析请见http://blog.csdn.net/tnndye/article/details/12784237。10月8日，百度移动开发-上海站笔试/面试题1、三色球排序的问题，相同的球放到一起，让你按顺序输出红白蓝三种颜色的球，可以用012来表示，要求只能扫描一次数组。点评：荷兰国旗问题，参见此文第8小节：http://blog.csdn.net/v_july_v/article/details/6211155。2、实现C的strstr点评：手写字符串处理相关函数是面试中极为常见的一类题型。功能：从字符串str1中查找是否有字符串str2， -如果有，从str1中的str2位置起，返回str1中str2起始位置的指针，如果没有，返回null。给两份参考代码，一份是C代码：char *mystrstr(char *s1 , char *s2)
+{
+	if(*s1==0)
+	{
+		if(*s2) 
+			return(char*)NULL;
+		return (char*)s1;
+	}
+	while(*s1)
+	{
+		int i=0;
+		while(1)
+		{
+			if(s2[i]==0) 
+				return s1;
+			if(s2[i]!=s1[i]) 
+				break;
+			i++;
+		}
+		s1++;
+	}
+	return (char*)NULL;
+}一份是C++代码：//copyright@caopengcs 2013/10月
+class Solution {
+public:
+	char *strStr(char *haystack, char *needle) {
+		// Start typing your C/C++ solution below
+		// DO NOT write int main() function
+		int i,j;
+		for (i = j = 0; haystack[i] && needle[j];) {
+			if (haystack[i] == needle[j]) {
+				++i;
+				++j;
+			}
+			else {
+				i = i - j + 1;
+				j = 0;
+			}
+		}
+		return needle[j]?0:(haystack + i - j);
+	}
+};3、写一个memmove的函数点评：手写常见字符串处理函数是面试官很喜欢考的一类题型。10月9日，暴风影音校招研发笔试1、给定字符串A和B，输出A和B中的第一个最长公共子串，比如A=“wepiabc B=“pabcni”，则输出“abc”。2、TCP建立连接的3次握手过程？若最后一次握手失败，会怎样处理？蜻蜓FM2014校招研发笔试10月11日，腾讯web前端面试一个数组 var arr = ['abc','ddadbc','adbdcd','abcqew'.......] 长度一万，  用最有效率的方法计算出包含被元素出现最多的。单机5G内存，磁盘200T的数据，分别为字符串，然后给定一个字符串，判断这200T数据里面有没有这个字符串，怎么做？如果查询次数会非常的多, 怎么预处理？点评：如果数据是200g且允许少许误差的话，可以考虑用布隆过滤器Bloom Filter：http://blog.csdn.net/v_july_v/article/details/6685894。但本题是200T，得另寻良策。OK，以下是@cy 提供的题解（暴露出的一个问题是题意不是特别明确，因为题解中有不少自己的假设，所以日后各位面试时一定要跟面试官彻底弄清题意再作答，包括各种使用条件）：“①. 内存和数据比是 5GB / 200TB, 约为 1 比 4w, 所以trie啥的就不用想了, 唯一的就是hash.②. 简单的假设每个字符串是相对短的(只要不会超过5GB)    1. 几MB, 甚至百MB的字符串也能处理, 但是确实对最终的效果有很大影响, 如果只是部分case特别大,可以特殊处理下.③. 一个字符串块 在内存中需要一个 条目 来标识    1. value 需要 8 字节, key约为4字节        1. 200TB总共有 200 * 2^40 位, 地址空间至少为48个bit, 存储长度用16bit则一个条目的value 需要8个字节    1. 这里的长度是用来存一个 字符串块 的长度, 单位可以优化为KB, 甚至MB, 16bit肯定是够的    1. key用4个字节有些紧张, 可以考虑占用部分长度的位    1. 长度也可以不在条目中出现, 而是在块头出现, 但这样取块的时候有可能浪费, 也有可能要取多次.    2. 所谓一个 字符串块 就是hash值相同的字符串挨个存在一起, 从而得到的字符串块.④. 这样的话, 5GB 可以存放最多 5GB / 8 约为 4亿个条目.⑤. 把原来的200TB字符串挨个的hash, 并按hash排序后, 存起来, 建立索引.     1. hash值可以用md5之类的散列到足够开, 然后 mod 4亿值来求⑥. 根据重排后的文件, 建立索引, key为hash值, value为前面说到的, 该hash对应字符串块在文件中的偏移, 和 块的长度.⑦查询时, 根据hash值, 找到该字符串可能在的字符串, 然后将整个字符串读出来, 用kmp比较即可. 200TB的数据, 被划到 4亿 个字符块当中, 平均一块应该在 800KB 附近, 考虑到hash不均衡, 一般也就是几MB的样子, 比较起来应该还OK. ⑧其他的小优化点:     1. 不是一个文件, 而是若干个文件, 但是不影响偏移的编号    1. 为什么做hash再分块? 避免通用前缀过多,导致分块极不均匀    1. 大长的字符串容易导致 字符串块 暴大, 可以考虑分为若干小串, 同时记录原来的位置, 知道是否是一个整串    1. 压缩...留一些空间做常用查询串的缓存...⑨再说怎么优化这个预处理的排序过程. 每次读5GB的数据进来, 算好hash分好桶, 这种OK吧, 然后按桶回写到下去, 这里也是批量写的. 处理完继续处理下一个5GB, 全部处理完后, 再做归并, 搞几轮后, 就OK了嘛. 当然, 为了把内存中排序时浪费的IO补回来, 可以 并行做, 一个在算的时候,另一个在读....”。10月12日，百度一面JAVA里面的线程同步机制、异常处理机制、集合类、简单的设计模式、hashmap和hashtable的区别，及HashMap和ConcurrentHashMap的区别。点评：关于hashmap和hashtable的区别，请看上文第13题，其余请自己查阅相关书籍。stat、SDE、PM、DS等相关职位的面试题1、有一组数据，很长，有ID，经纬度，时间4个变量。怎么找出两人是否有一面之缘。怎么找出所有relationship（定义是在100米范围内一起度过1小时以上）。2、怎么找出竞争对手购买了哪些搜索关键词。3、怎么判断两个TB级别的文本是否雷同，是否近似。4、怎么用C实现SQL的join功能。5、怎么最快的在一个大文本里面搜索字符串。6、coding计算斐波那契数列。更多请参看：http://mp.weixin.qq.com/mp/appmsg/show?__biz=MjM5ODIzNDQ3Mw==&appmsgid=10000300&itemidx=1&sign=173a62e0db86cb4c76a0bb1e9c22f3e5。10月12日，网易游戏专业一面  1、怎么判断单链表有没有环  2、怎么判断两个无环单链表是否相交  3、101个硬币中有一个假币，有一个无砝码的天平，称两次，判断假币比真币重还是轻。点评：老掉牙的题，没点评的欲望，原文请看：http://blog.csdn.net/cqsctlsss/article/details/12747631。10月13日，百度笔试题：1、 给出数组A={a_0,a_1,a_2,...,a_n}（n是可变的），打印出所有元素的组合2、 数组A中任意两个相邻元素大小相差1，现给定这样的数组A和目标整数t，找出t在数组A中的位置。3、 求二叉树的面积（高乘宽），高为二叉树根到叶子节点的最大距离，宽慰二叉树最多的节点数。4、给了一个百度地图的截图，对于地图上的某一点，需要在地图上标注该点的信息，将信息抽象成一个矩形，可以在该点的左边标记，也可以在该点右边标记。但是任意两点标记后的矩形是不能有覆盖的，否则删除其中一个点    问题1，现给一固定区域，有n个点，设计一个算法，要求标记足够多的点    问题2，当点足够多时候，算法会遇到性能瓶颈，需要对算法重新优化。更多题目请参见：http://blog.csdn.net/xyanghomepage/article/details/12687771。腾讯笔试题两道1、有100W个关键字，长度小于等于50字节。用高效的算法找出top10的热词，并对内存的占用不超过1MB。点评：老题，与caopengcs讨论后，得出具体思路为：①先把100W个关键字hash映射到小文件，根据题意，100W*50B = 50*10^6B = 50M，而内存只有1M，故干脆搞一个hash函数 % 50，分解成50个小文件；②针对对每个小文件依次运用hashmap(key，value)完成每个key的value次数统计，后用堆找出每个小文件中value次数最大的top 10；③最后依次对每两小文件的top 10归并，得到最终的top 10。注：很多细节需要注意下，举个例子，如若hash映射后导致分布不均的话，有的小文件可能会超过1M，故为保险起见，你可能会说根据数据范围分解成50~500或更多的小文件，但到底是多少呢？我觉得这不重要，勿纠结答案，虽准备在平时，但关键还是看临场发挥，保持思路清晰关注细节即可。OK，更多类似题目参见此文：http://blog.csdn.net/v_july_v/article/details/7382693。2、求二叉树的任意两个节点的最近公共祖先。点评：何谓最低公共祖先，如下图所示：节点1和节点7的最低公共祖先便是5  点评：此题看似简单，实则不简单，下面参考引用《Cracking the Coding Interview》一书上的解法：说简单是因为如果这棵树是二叉查找树，则最低公共祖先t必在两个节点p和q的中间处，即p<t<q；说不简单则是因为如果不是二叉查找树，则我们必须确定这棵树的结点是否包含指向父结点的连接，如此： ①当包含指向父结点的连接时，如果每个结点都包含指向父结点的连接，我们就可以向上追踪p和q的路径，直至两者相交。 不过，这么做可能不符合题目的若干假设，因为它需要满足以下两个条件之一：1）可将结点标记为isVisited；2）可用另外的数据结构如散列表储存一些数据。 ②不包含指向父结点的连接时，另一种做法是，顺着一条p和q都在同一边的链子，也就是说，若p和q都在某结点的左边，就到左子树中查找共同祖先。 若都在右边，则在右子树中查找共同祖先。要是p和q不在同一边，那就表示已经找到第一个共同祖先。这种做法的实现代码如下：/* 若p为root的子孙，则返回true */
+boolean covers(TreeNode root, TreeNode p) { 
+	if (root == null) return false;
+	if (root == p) return true;
+	return covers(root.left, p) || covers(root.right, p); 
+}
+
+TreeNode commonAncestorHelper(TreeNode root, TreeNode p, 
+	TreeNode q) {
+		if (root == null) return null;
+		if (root == p || root == q) return root;
+		boolean is_p_on_left = covers(root.left, p);
+		boolean is_q_on_left = covers(root.left, q);
+
+		/* 若p和q不在同一边，则返回root */
+		if (is_p_on_left != is_q_on_left) return root;
+		/* 否则就是在同一边，遍访那一边 */
+		TreeNode child_side = is_p_on_left ? root.left : root.right;
+		return commonAncestorHelper(child_side, p, q);
+}
+
+TreeNode commonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+	if (!covers(root, p) || !covers(root, q)) { // 错误检查
+		return null;
+	}
+return commonAncestorHelper(root, p, q);
+}但上述代码存在一些问题，读者可以进一步思考，后续可能会在编程艺术系列里详细阐述，可保持关注。OK，其实本题是常见的Lowest Common Ancestor (LCA) 问题，更多分析可再看看这3篇文章：①http://eriol.iteye.com/blog/1170465；②http://zhedahht.blog.163.com/blog/static/25411174201081263815813/；③http://community.topcoder.com/tc?module=Static&d1=tutorials&d2=lowestCommonAncestor。此外，关于二叉树有很多面试题目，参见：http://blog.csdn.net/luckyxiaoqiang/article/details/7518888。10月13日，小米2014校招研发笔试-北京站2小时3道编程题Q1：给出一个int数组，通过变换使得左边全为奇数右边全为偶数。Q2：给出一颗有序二叉树，将它转换为有序的双向链表输出。有序二叉树形如：          10          /   \        6     14      /   \    /    \    4    8 12  16双向链表形如：4=6=8=10=12=14=16Q3：字符串的四则运算。给出一个字符串，包含0~9的数字和+-*/()的运算符，-仅代表减号不代表负数。举例如下：输入：1+2*(3-4)输出：-1.参考分析见：http://www.itmian4.com/forum.php?mod=viewthread&tid=3713。10月13日，百度深度学习算法研发工程师笔试题一、简答题    1.深度神经网络目前有哪些成功的应用？简述原因。(10分)    2.列举不同进程共享数据的方式（至少三种）。(10分)    3.对于N个样本，每个样本为D维向量，采用欧式距离使用KNN做类预测。(10分) 1).给出预测时间复杂度。 2).当N很大时，有哪些方法可以降低复杂度？ 3).k取值的大小对预测方差和偏差有何影响？二、算法和程序设计    1.给出一个数据A=[a_0, a_1, a-2, ... a_n](其中n可变)，打印出该数值元素的所有组合。(15分)     2.有这样一个数组A,大小为n，相邻元素差的绝对值都是1，如A={4,5,6,5,6,7,8,9,10,9}。现在给定数组A和目标整数t，请找到t在数组中的位置。(15分)     3.在平面上有一组间距为d的平行线，将一根长度为l(l<d)的针任意掷在这个平面上，求此针与平行线中任意一根相交的概率，用高等数学(微积分、概率的方法)求解，基于布丰投针的结论，任选一种编程语言(C/C++, matlab, python, java)，写出模拟投针实验(程序中允许把一个理想的Pi作为常量使用)，求解圆周率。(15分)三、系统设计题2.关于K-means聚类算法，请回答以下问题：    1).写出将N个样本X=(x1, ... xN)聚类成k类的k_means聚类算法的优化目标；    2).描述K-means终止的常用条件；    3).以Kmeans算法为例，描述Expectation-Maximization(EM)算法的基本原理与步骤。    4).用伪代码给出基于MPI或者HADOOP的Kmeans并行算法。题目来源：http://blog.csdn.net/luoweifu/article/details/12685169。10月13日，百度2014校招移动研发笔试题一.简答题  1.简述计算机的存储系统分为哪几个层次，为什么这样的分层能够提高程序的执行效率。  2.浮点数在计算中如何表示，如何对浮点数判等。  3.简述TCP与UDP协议的差别，两者与HTTP的关系。并列举HTTP的方法，以及常见的返回状态码。二.算法与程序设计  1.设计一个反转字符串的函数 char *reverse_str(char *str),不使用系统函数。  2.给定一个字符串,（1，（2，3），（4，（5，6），7））,使它变为（1，2，3，4，5，6，7），设计一个算法消除其中嵌套的括号。(c/c++)  3.使用C语言实现htonl（将long性转为网络字节码），不使用系统自带函数。三.系统设计题面向对象是一种思想，使用C语言来实现下列问题。  1.如何定义一个类？  2.如何创建以及销毁对象？  3.如何实现类的继承？题目来源：http://blog.csdn.net/cocoarannie/article/details/12691025。10月14日，欢聚时代YY-2014校招软件研发笔试题点评：类似上面第1题跟海量数据相关的笔试面试题，看这一篇文章即够：http://blog.csdn.net/v_july_v/article/details/7382693。更多题目请参见：http://blog.csdn.net/Arcsinsin/article/details/12714027。输入一个整形数组，数组里有正数也有负数。数组中连续的一个或多个整数组成一个子数组，每个子数组都有一个和。求所有子数组的和的最大值。要求时间复杂度为O(n)。例如输入的数组为1, -2, 3, 10, -4, 7, 2, -5，和最大的子数组为3, 10, -4, 7, 2，因此输出为该子数组的和18。点评：求子数组的最大和这个问题，在本博客内的编程艺术系列第7章：http://blog.csdn.net/v_JULY_v/article/details/6444021 已有详细阐述，但那毕竟只是针对一维数组，如果数组是二维的呢？ 如果 “子数组” 并不只是一个二维数组或矩形，而是联通的元素(上下或左右相邻即视为联通)呢? 再言之，如果是个轮胎呢？嘻上述这些问题来源于邹欣老师的博客：http://www.cnblogs.com/xinz/p/3318230.html。而且事实上，去年本博客内也同样整理过这几个问题，如此文第22题：http://blog.csdn.net/v_july_v/article/details/6855788。给平面上的2n个点，怎么找一个圆包含其中的n个点？10月17日，微策略2014校招笔试1. coding判定二叉树是否是有序二叉树2. 一个有序数组A（buffer足够大），和一个有序数组B，设计算法，merge两个数组后有序，不使用任何额外的内存空间。3. 100个点灯问题，初始状态都是OFF，进行1000次试验，第x次，按动一下能被x整除，计算最终的状态是ON的点灯编号。Coding实现，设计两种方案，并分析时间、空间复杂度4. Web, css3中 visibility="hide"(页面保留空间) 与 display="none"（页面不保留空间）有何区别?一般元素选择器有哪些？   Padding, margin, height, width在图形中指什么？一个干净的、轻量级的标签以及 结构与表现更好的分离，高级选择器是非常有用的。Class选择器Id选择器属性选择器 [arr = xx] [att *= xx] [att ^=xx] [att $= xx]伪选择器 first after before5. Web性能改进方面的10个提议：涉及图片、js、css、client, server6. 数字游戏：桌子上有数值为Number的数字，2个玩家，每个玩家可以选择减去有 Number中连续1,2，，，，位构成的数值，桌子上换成差值，循环下去。提出算法：第一个玩家应该怎么减去桌子上的数值，如果第一个玩家输，返回-17. 交换单链表中两个指针（提示不能直接交互单链表中值）读者@fhljys留言提供：百度一面试题磁盘里有100T的数据，每一个数据项有一个Key，数据项按key的升序排列，但是key不连续。每个数据项的大小不一样，但是都不超过1M，每一个数据项以特定的标识符结束。现在内存大小为256M，如何找到指定Key的数据项。点评：具体思路就是二分查找，更多讨论请见：http://weibo.com/1580904460/AeVSDCdac?mod=weibotime。10月17日，新浪2014校招应用开发笔试题10月17日，360校招测试开发一面1、写一个单例模式2、怎么样对一个hashmap里的<key，value>根据key进行排序？3、给出一个路径“D/test/test.txt”，其中记录了一个搜索结果“百度，关键词，结果1-10,360，关键词，结果1-10”，用程序实现把这两个搜索结果中出现相同关键词的搜索结果存入另一个文件中。4、对一个数组中找出第二大的数5、TCP的三次握手是怎样的过程，如果是两次握手会怎么样，四次握手呢？美团2014校招二面假设已有10w个敏感词，现给你50个单词，查询这50个单词中是否有敏感词。点评：换句话说，题目要你判断这50个单词是否存在那10w个敏感词库里，明显是字符串匹配，由于是判断多个单词不是一个，故是多模式字符串匹配问题，既是多模式字符串匹配问题，那么便有一类称之为多模式字符串匹配算法，而这类算法无非是kmp、hash、trie、AC自动机、wm等等：http://stblog.baidu-tech.com/?p=418。那到底用哪种算法呢？这得根据题目的应用场景而定。10w + 50，如果允许误差的话，你可能会考虑用布尔过滤器；否则，只查一次的话，可能hash最快，但hash消耗空间大，故若考虑tire的话，可以针对这10w个敏感词建立trie树，然后对那50个单词搜索这颗10w敏感词构建的tire树，但用tire树同样耗费空间，有什么更好的办法呢？Double Array Trie么？请读者继续思考。谷歌面试题：输入是两个整数数组，他们任意两个数的和又可以组成一个数组，求这个和中前k个数怎么做？点评：引用朋友Ben博客http://blog.csdn.net/tnndye/article/details/12857577 内的分析，“假设两个整数数组为A和B，各有N个元素，任意两个数的和组成的数组C有N^2个元素。       那么可以把这些和看成N个有序数列：              A[1]+B[1] <= A[1]+B[2] <= A[1]+B[3] <=…              A[2]+B[1] <= A[2]+B[2] <= A[2]+B[3] <=…              …             A[N]+B[1] <= A[N]+B[2] <= A[N]+B[3] <=…        问题转变成，在这N个有序数列里，找到前k小的元素”：http://blog.csdn.net/v_JULY_v/article/details/6370650。阿里巴巴二面：两个字符串A、B。从A中剔除存在于B中的字符。比如A=“hello world”,B="er"，那么剔除之后A变为"hllowold"。空间复杂度要求是O(1)，时间复杂度越优越好。点评：微博上一朋友@kanrence留言到：把B对应的字符在asc码表上置1，然后扫描A，表上置1的就A上删掉。或者如@齐士博Go所说asc的bitvector, O(m+n); 先把B映射到vecotr，再遍历A。这两种方法因为都是常数空间127，所以可以认为是空间复杂度O(1)，此外，还有别的什么方法么？位运算？更多讨论请见这：http://weibo.com/1580904460/AeNifo3tI?mod=weibotime。创新工场面试1、有一个int型数组，每两个相邻的数之间的差值不是1就是-1.现在给定一个数，要求查找这个数在数组中的位置。2、一个字符数组，里面的字符可能是a-z、A-Z、0-9.现在要求对数组进行排序，要求所有小写字符放在最前面，所有大写字符放在中间，所有数字放在最后，而且各部分内部分别有序。点评：面试中纸上coding能力尤为重要，且答题之前一定要跟面试官交流以彻底弄清楚题意，题目来源：http://blog.csdn.net/xiajun07061225/article/details/8882981。10月17日，网易2014校招雷火游戏一面1、i）Class A{
+...
+};
+A *pa = new A();
+A *pas = new A[NUM]();
+
+1.delete []pas;                //详细流程
+2.delete []pa;                //会发生什么
+3.delete pas;                //哪些指针会变成野指针ii）、为什么不建议经常手动new和delete而以内存池取代iii）、malloc函数本身涉及的几种系统调用iv）、内存分配算法伙伴算法整理自：http://www.itmian4.com/forum.php?mod=viewthread&tid=3753。10月21日，唯品会2014校招南京站-数据挖掘与分析岗位笔试题目来源：http://www.itmian4.com/forum.php?mod=viewthread&tid=3770。2013巨人网络笔试题1、双向链表用C++实现一个双向链表（元素类型为int）,需支持  a、两个链表之间的深拷贝  b、两个链表的拼接  c、从链表头插入/删除元素  d、查找链表中的某个元素  e、返回链表中指定下标的元素2、图像旋转90度；上下行互换其余题目参见：http://www.itmian4.com/forum.php?mod=viewthread&tid=3777。10月21日，微策略MicroStrategy2014校招聘面试题1、判断一个字符串是否回文2、如何快速找出一个有序数组中a=i的那个元素3、p是素数，p>=3,证明p(p^2-1)能被24整除来源：http://www.itmian4.com/forum.php?mod=viewthread&tid=3780。腾讯2014校招笔试题-广州站简单题1 请设计一个排队系统，能够让每个进入队伍的用户都能看到自己在队列中所处的位置和变化，队伍可能随时有人加入和退出；当有人退出影响到用户的位置排名时需要及时反馈到用户。2 A，B两个整数集合，设计一个算法求他们的交集，尽可能的高效。其余题目参见：http://www.itmian4.com/forum.php?mod=viewthread&tid=3788。网易2014校园招聘杭州Java笔试题http://blog.csdn.net/hxz_qlh/article/details/13168267；2014小米研发笔试(南京站)http://blog.csdn.net/thyftguhfyguj/article/details/13161339；10月26日，2014年腾讯校园招聘技术类笔试题(杭州站) http://www.itmian4.com/forum.php?mod=viewthread&tid=3802&extra=page%3D1。10月19日，合合信息科技-校园招聘笔试题点评：上述第3题即为编程艺术第二章，见http://blog.csdn.net/v_JULY_v/article/details/6347454。10月29日，奇虎360校招面试，一堆的基础题，详见：http://blog.csdn.net/wangyf101/article/details/14048333。10月30日， UC2014校园招聘技术类笔试题有无OJ的ID，或github的账号，或技术博客地址？点评：快排实现见此文http://blog.csdn.net/v_JULY_v/article/details/6262915。更多题目见：http://blog.csdn.net/lujingbiao/article/details/13510299。10月31日，58同城2014校园招聘笔试题点评：着实没想到，58同城于2013年10月31日在纽约上市了，恭喜！毕竟他们的老总姚金波也是我湖南人。记得之前去这家公司面试过，面试官很好，即便一时半会答不上来，他也会耐心引导你一起思考，可惜的是最后跟人事谈待遇的时候，不给一点余地，所以，直接拒掉了，如果现在再面一次，人事还是那般，依然会再拒一次:-)。但，尽管如此，58还是值得朋友们选择。OK，更多题目见：http://blog.csdn.net/Hedy20120808/article/details/13766781。Given a matrix of m x n elements (m rows, n columns), return all elements of the matrix in spiral order。一句话，即为螺旋矩阵问题。举个例子，给定如下的一个矩阵: [  [ 1, 2, 3 ],  [ 4, 5, 6 ],  [ 7, 8, 9 ] ]你应该返回：[1,2,3,6,9,8,7,4,5]。如下图所示，遍历顺序为螺旋状：以下是一份参考代码：class Solution {  
+public:  
+	vector<int> spiralOrder(vector<vector<int> >& matrix) {  
+		vector<int> result;  
+		if (matrix.empty()) return result;  
+		ssize_t beginX = 0, endX = matrix[0].size() - 1;  
+		ssize_t beginY = 0, endY = matrix.size() - 1;  
+
+		while (true) {  
+			// From left to right  
+			for (ssize_t i = beginX; i <= endX; ++i)  
+				result.push_back(matrix[beginY][i]);  
+			if (++beginY > endY) break;  
+
+			// From top down  
+			for (ssize_t i = beginY; i <= endY; ++i)  
+				result.push_back(matrix[i][endX]);  
+			if (beginX > --endX) break;  
+
+			// From right to left  
+			for (ssize_t i = endX; i >= beginX; --i)  
+				result.push_back(matrix[endY][i]);  
+			if (beginY > --endY) break;  
+
+			// From bottom up  
+			for (ssize_t i = endY; i >= beginY; --i)  
+				result.push_back(matrix[i][beginX]);  
+			if (++beginX > endX) break;  
+		}  
+		return result;  
+	}  
+};  代码来源leetcode：http://discuss.leetcode.com/questions/29/spiral-matrix。待续，11月5日中午..后记    有一点想不遗余力的特别强调：如果你是找软件开发相关的职位，那么基础第一，其次便是coding能力是否过硬，此决定你有多少资本/薪水/是在国内还是国外，最后才是算法，希望勿本末倒置。不少人总是有意无意忽视coding，以为虽coding能力一般，但算法好，抱有此种侥幸心理的最后都会发现得不偿失。不具备基本编程能力的人，永远无法真正迈进软件开发领域。    再者，算上今年，本博客已经连续整理了4个年头的笔试面试题，从这些笔试面试题中，细心的朋友自会发现，每一年校招的很多编程题屡屡都是编程艺术系列上的原题，故我希望大家掌握的是一类题目的方法，而不是纠结于某一道题的标准答案。    正因为方法比答案重要，所以编程艺术系列从最容易想到的思路开始讲起，一步步优化，而不是其它题解那样一上来就给你所谓的标准速成答案，面试亦如此。    最后，除了程序员编程艺术系列外，再推荐一些资料、书籍和讲座给大家，供大家参考：程序员编程艺术http://blog.csdn.net/column/details/taopp.html；秒杀99%的海量数据处理面试题http://blog.csdn.net/v_july_v/article/details/7382693；微软面试100题系列http://blog.csdn.net/column/details/ms100.html；《编程之美》；《剑指offer》；《Cracking the Coding Interview: 150 Programming Questions and Solutions》，顺便贴个此本书的题解：http://hawstein.com/posts/ctci-solutions-contents.html，且其中文版《程序员面试金典》即将由图灵教育出版社出版；我个人举办的专为帮助大家找工作的面试&算法讲座：http://blog.csdn.net/v_july_v/article/details/7237351#t26；一个刷面试题的leetcode：http://leetcode.com/，顺便附带一个leetcode的题解供参考：https://github.com/soulmachine/leetcode；程序员面试网站careercup：http://www.careercup.com/；一个IT面试论坛：http://www.itmian4.com/。友人@陈利人 维护的一面试相关的微信公众账号“待字闺中”。    有何见解或思路，欢迎随时评论于本文之下，或show me your code！感谢。
+
+                作者：v_JULY_v 发表于2013-9-23 10:13:43 原文链接
+
+
+            阅读：98256 评论：142 查看评论

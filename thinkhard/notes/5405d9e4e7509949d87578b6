@@ -1,0 +1,59 @@
+
+
+门户大开型（fully exposed）： 只能提供公用成员闭包： 真正创建私有成员，只有通过一些公开的方法来访问还是闭包：共享一些静态成员，节能减排
+
+
+
+
+先看看大开门户的对象
+var Book = function(name, author){
+   this.bookname = name;
+   this.bookauthor = author;
+}
+
+var book =new Book("Javascript Design Pattern", "Jim Backerly");
+
+这种方法简单，但是成员是public的，无法达到封装内部构造的作用。
+
+
+创建一个闭包来存放私有成员，只允许通过特定的方法来访问
+
+
+公开成员是构造函数的内嵌函数，拥有访问内部变量的能力，我们可以通过它来访问实例中的私有成员： 
+
+var Book =function(name,author){ 
+	var author= author; 
+	this.getAuthor=function(){
+		return author;
+	}
+}
+var book =new Book("Javascript Design Pattern", "Jim Backerly");
+
+book.getAuthor(); // return "Jim Backerly"
+
+使用构造函数的内部局部变量来充当实例的私有成员， 一旦new一个新的实例都会创建一个这样的私有实例成员。只能通过实例方法来访问，不能直接访问。
+
+
+静态方法和属性：让所有实例共享一些方法和属性往往是个不错的主意
+  静态成员是类级别的成员， 因此它不能存放在构造出每个实例的构造函数之中，那实例（构造函数）如何访问？ 答案还是：闭包！！！
+  和实例级别的成员不同的是，静态成员不存在任何一个实例之中。 实例级别的成员将会在构造函数别被调用之后，存放在一个局部变量之中，并且通过闭包中公开成员（内嵌函数）来访问，内嵌函数是实例的公开方法。静态成员在闭包中也是存放在一个局部的变量， 不同的是这个变量可以被内嵌的构造函数访问。 这个构造函数在创建的每一个实例中通过闭包访问外层函数中的局部变量， 从而实现一个私有的静态成员。 
+var Book = (function(){
+	var count;
+    	return function(name, author){
+		var bookName = name;
+		var bookAuthor = author;
+		this.getName = function() {return bookName;}
+		this.getAuthor = function(){return bookAuthor;}
+		this.count = count;
+	}
+})();
+
+这段执行之后Book就是闭包中return的构造函数， 可以通过new Book() 来创建新的实例， 每个实例内部都可以访问同一个静态的count变量。  
+公开的静态方法和属性较为简单， 把方法或者属性直接作为构造函数的属性即可。
+
+
+
+                作者：u011459840 发表于2013-12-1 20:40:41 原文链接
+
+
+            阅读：145 评论：0 查看评论

@@ -1,0 +1,62 @@
+<img class="cover" src="/static/images/fm.png"/>
+<p>
+    Lisp中列表（list）是一个值对，通过操作cons来创建值对，例如(cons 1 2), 1和2分别是值对的两个值。 cons操作具有闭包性，因此构成列表的元素可以是原子类型，也可以是列表类型本身,如(cons 1 (cons
+    2 3))。读取列表的操作有car、cdr,分别是读取值对的“左值”和“右值”，如(car '(1 2)) 返回1，(cdr '(1 2)) 则返回2， car、cdr操作同样具有闭包性。
+</p>
+<h4>Lisp 递归的威力</h4>
+<p>
+    对于用程序描述列表中是否包含某个元素这样一个功能，大多数的编程语言可以让你使用（for||while）迭代来完成,。但是Lisp可以完全使用函数递归来完成，而令我感到惊讶是它仅仅使用car、cdr。
+</p>
+<pre class="prettyprint">
+(defun our-member (obj lst)
+    (if (null lst)
+        nil
+    (if (eql (car lst) obj)
+        lst
+(our-member obj (cdr lst)))))
+</pre>
+
+<p>这种通过纯函数来表达计算过程， 比起过程化的for&&while语法来说更加简洁。 在学习lisp语言之前，我从来没有想过要遍历一个列表，除了迭代之外还可以用递归，而递归这种方法更适合用来描述一个数学计算问题。
+    对于Javascript这样的语言，它具有比lisp更加丰富的数据结构，通常我们会用一个Array来表示列表，它的语法更为直观如:
+</p>
+
+<pre class="prettyprint"> 
+var list =[1,2,3,4];
+for(var i =0;i< list.length;i++){
+    //list[i]
+}
+</pre>
+<p>
+    虽然如此，我仍然希望Javascript也可以仅仅使用cons,car,cdr函数的来完成列表的各种操作，谨此来引发对不同语言的思考，这也是我写这个笔记的目的。
+</p>
+
+<h4>Javascript 纯函数实现 cons、car、cdr</h4>
+
+<pre class="prettyprint"> 
+var cons =function(left, right){
+    return function(f){return f(left,right);}; // 返回列表函数, 使left,right一直保存在内存中
+}
+
+var car =function(list){
+    return list(function(left,right){return left;}); // 实例化高阶函数f，取left值
+}
+
+var cdr = function(list){
+    return list(function(left,right){return right;});// 实例化高阶函数，取right值
+}
+
+var list = cons(1,cons(2,3));
+car(list); //1
+car(cdr(list)); //2
+</pre>
+<p>
+    cons没有使用任何javascript数据类型来存储left
+    、right值，而是返回一个“列表函数“。借助Javascript的closure，cons把left，right传递到另一个高阶函数f，使得外部函数可以访问它们，最后为了取到列表的left和right，我们只要在car、cdr中实例化高阶函数f并传递给“列表函数"
+    list。
+</p>
+<p>
+    结语：数据去哪儿了？Javascript通过closure，让高阶函数接受自由变量作为参数，自由变量随高阶函数生与灭，而高阶函数在调用时不也被当做数据吗？这也正如函数式语言的宣称的那样，一切皆为函数。
+</p>
+<p>
+    注：Javascript closure 通常也叫做闭包，但和前面提到的闭包操作是不同的概念。
+</p>

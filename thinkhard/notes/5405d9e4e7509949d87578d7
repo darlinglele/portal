@@ -1,0 +1,157 @@
+话说微信公众账号上的第一期有奖征答活动发布至今已有两周时间，不过参与人数寥寥，是太难，还是奖品不够吸引人？大家要多参与，我们才能长期互动嘛。现在我就对第一期的题目“逆泛型执行器”进行简单讲解吧，其实这题很简单，以后类似难度的题目可能会放在“快速问答”环节中。话说第一期的快速问答还在进行之中，大家加油。
+参考解答
+所谓“逆泛型”，即我们希望可以在一个泛型操作中，只对特定的类型组合进行响应。例如：
+public class TicksToDateTimeCaller {
+
+    private static DateTime TicksToDateTime(long ticks) {
+        return new DateTime(ticks);
+    }
+
+    public TResult Call<T, TResult>(T arg) {
+        return (TResult)(object)TicksToDateTime((long)(object)arg);
+    }
+}
+以上代码会产生无谓的代码转换及装箱拆箱操作（尽管它们在 Release 模式下会被优化掉），为了避免这点，我们可以这么做：
+public class TicksToDateTimeCaller {
+
+    private static class Cache<T, TResult> {
+        public static Func<T, TResult> Call;
+    }
+
+    private static DateTime TicksToDateTime(long ticks) {
+        return new DateTime(ticks);
+    }
+
+    static TicksToDateTimeCaller() {
+        Cache<long, DateTime>.Call = TicksToDateTime;
+    }
+
+    public TResult Call<T, TResult>(T arg) {
+        return Cache<T, TResult>.Call(arg);
+    }
+}
+我们创建了一个内部类 Cache，它起到了缓存的作用。.NET 泛型的奇妙之处便在于其“动态”及“区分”。“动态”在于它可以于运行时进行具体化（相对于 C++ 里的“静态”），不过目前的问题不涉及这点。而“区分”则意味着不同的具体泛型参数，在 .NET 中都是不同的类型，拥有完全分离的元数据，例如方法表（Method Table），以及静态字段等等。
+这里我们便利用了这一点。由于我们只针对特定类型组合的 Cache 类型设置其 Call 字段，于是其他的类型组合自然就会直接抛出异常了。值得注意的是，也正是由于“区分”，不同的具体化类型拥有不同的元数据。因此，假如这个方法会遭遇大量非法调用的话，最好在访问 Cache<T, TResult> 之前进行类型判断，并直接抛出异常，这样可以避免产生无用的元数据。
+之前有人问，为什么不可以用 Java 来实现呢？要知道 .NET 的泛型岂是 Java 的“伪泛型”可以相提并论的。
+推广用法
+这种做法还可以推广开来。例如在我目前的项目中用到一个第三方类库，它提供了一条条记录，我们可以读取其各字段的值，API 如下方 IRecord 接口所示：
+public interface IRecord {
+    string GetString(string field);
+    int GetInt(string field);
+    long GetLong(string field);
+}
+但这个 API 在使用上并不友好，我们更期望可以有一个通用的 Get<T> 方法，可以用来读取各种类型。于是我们便可以如此来编写一个扩展方法：
+public static class RecordExtensions {
+
+    private static class Cache<T> {
+        public static Func<IRecord, string, T> Get;
+    }
+
+    static RecordExtensions() {
+        Cache<string>.Get = (record, field) => record.GetString(field);
+        Cache<int>.Get = (record, field) => record.GetInt(field);
+        Cache<long>.Get = (record, field) => record.GetLong(field);
+    }
+
+    public static T Get<T>(this IRecord record, string field) {
+        return Cache<T>.Get(record, field);
+    }
+}
+事实上，使用 Lambda 表达式会生成额外的间接调用，我们直接使用 CreateDelegate 方法可以进一步降低开销。当然，这属于极小的优化，但既然不麻烦，又何乐而不为呢：
+public static class ReflectionExtensions {
+
+    public static TDelegate CreateDelegate<TDelegate>(this MethodInfo method) {
+        return (TDelegate)(object)Delegate.CreateDelegate(typeof(TDelegate), method);
+    }
+}
+
+public static class RecordExtensions {
+
+    private static class Cache<T> {
+        public static Func<IRecord, string, T> Get;
+    }
+
+    static RecordExtensions() {
+        Cache<string>.Get = typeof(IRecord).GetMethod("GetString").CreateDelegate<Func<IRecord, string, string>>();
+        Cache<int>.Get = typeof(IRecord).GetMethod("GetInt").CreateDelegate<Func<IRecord, string, int>>();
+        Cache<long>.Get = typeof(IRecord).GetMethod("GetLong").CreateDelegate<Func<IRecord, string, long>>();
+    }
+
+    public static T Get<T>(this IRecord record, string field) {
+        return Cache<T>.Get(record, field);
+    }
+}
+作为一个主要工作是写基础代码给别人用的人，我还真积累了不少编写 API 的有趣经验，有机会慢慢分享。这里先来一发，那就是使用 out 关键字来减少类型信息——谁让 C# 只能通过参数进行类型推断呢？
+public static class ReflectionExtensions {
+
+    public static void CreateDelegate<TDelegate>(this MethodInfo method, out TDelegate result) {
+        result = (TDelegate)(object)Delegate.CreateDelegate(typeof(TDelegate), method);
+    }
+}
+
+public static class RecordExtensions {
+
+    private static class Cache<T> {
+        public static Func<IRecord, string, T> Get;
+    }
+
+    static RecordExtensions() {
+        typeof(IRecord).GetMethod("GetString").CreateDelegate(out Cache<string>.Get);
+        typeof(IRecord).GetMethod("GetInt").CreateDelegate(out Cache<int>.Get);
+        typeof(IRecord).GetMethod("GetLong").CreateDelegate(out Cache<long>.Get);
+    }
+
+    public static T Get<T>(this IRecord record, string field) {
+        return Cache<T>.Get(record, field);
+    }
+}
+再留个问题：参考解答中的 TicksToDateTime 方法是静态方法，那假如我们需要调用的是一个实例方法又该怎么做？注意，这里不允许在每个对象的构造函数里创建独立的委托对象，因为这个操作的开销太大。创建一个静态的对象不过是一次性工作，而创建大量的对象则会造成十分可观的开销了。
+没想出来？举一反三的能力必须加强啊。
+其他答案
+这个问题只收到的答案寥寥无几。有的比较无厘头，例如：
+public class TicksToDateTimeCaller {
+
+    private static dynamic TicksToDateTime(dynamic ticks) {
+        return new DateTime(ticks);
+    }
+
+    public TResult Call<T, TResult>(T arg) {
+        return (TResult)TicksToDateTime(arg);
+    }
+}
+dynamic 怎么能解决装箱拆箱问题？一定要记住，dynamic 等同于 object，它只是在访问的时候，会由编译器生成额外负责动态调用的代码而已。事实上，这方面的开销可不仅仅是装箱拆箱，不信用 ILSpy 反编译看看？我们不能如此简单地望文生义。
+还有个答案较为有趣，虽然会有额外的开销，但这个思路还是比较有参考意义的，于是这次的大奖就发给他了：
+public class Parser<T, TResult> {
+
+    public static readonly Func<T, TResult> Func = Emit();
+
+    private static Func<T, TResult> Emit() {
+        var method = new DynamicMethod(string.Empty, typeof(TResult), new[] { typeof(T) });
+        var il = method.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ret);
+        return (Func<T, TResult>)method.CreateDelegate(typeof(Func<T, TResult>));
+    }
+}
+
+public class TicksToDateTimeCaller {
+
+    private static DateTime TicksToDateTime(long ticks) {
+        return new DateTime(ticks);
+    }
+
+    public TResult Call<T, TResult>(T arg) {
+        return Parser<DateTime, TResult>.Func(TicksToDateTime(Parser<T, long>.Func(arg)));
+    }
+}
+还有个同学给出了类似的做法，他受到 StackOverflow 上这个问题的启发，给出了如下的做法：
+private static class Cache<T, TResult> {
+
+    public static Func<T, TResult> Call;
+
+    static Cache() {
+        Cache<long, DateTime>.Call = TicksToDateTime;
+    } 
+}
+可惜的是，初始化 Call 的代码放错了位置，且经过提醒还是未能发现问题。我认为这意味着并没有完全搞清楚代码的机制，因此只能给个小奖了。
+最后，欢迎大家关注我的公众账号“赵人希”，有技术有生活，深入刻画了本人在娱乐圈内的起起伏伏。

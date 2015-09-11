@@ -1,0 +1,122 @@
+说起来这是个很简单的问题，我以前肯定可以给出确切地答复，但是前几天想到这点的时候突然楞住了。把这个问题发到微博上去之后，很多人说是“会”，但要么是猜的，或是给出的原因明显不靠谱。最后我只能自己简单研究一下了，最后得到的结果是“不会”装箱。请注意，这个问题是指，对于一个实现了IDisposable接口的值类型对象使用using语句，而不是将它直接复制给一个IDisposable引用——后者显然是会装箱的，会对性能产生一定负面影响。
+首先我们来写一小段测试代码：
+internal struct DisposableStruct : IDisposable {
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public void Dispose() { }
+}
+
+[MethodImpl(MethodImplOptions.NoInlining)]
+static void DoSomething(object args) { }
+
+[MethodImpl(MethodImplOptions.NoInlining)]
+static void UsingStruct() {                    // Line 31
+    using (var ds = new DisposableStruct()) {  // Line 32
+        DoSomething(ds);                       // Line 33
+    }                                          // Line 34
+}                                              // Line 35
+编译之后使用ILSpy查看其IL，则能得出这样的结果：
+.method private hidebysig static 
+    void UsingStruct () cil managed noinlining
+{
+    // Method begins at RVA 0x26a0
+    // Code size 36 (0x24)
+    .maxstack 1
+    .locals init (
+        [0] valuetype .DisposableStruct ds
+    )
+
+    IL_0000: ldloca.s ds
+    IL_0002: initobj .DisposableStruct
+    .try
+    {
+        IL_0008: ldloc.0
+        IL_0009: box .DisposableStruct
+        IL_000e: call void .Program::DoSomething(object)
+        IL_0013: leave.s IL_0023
+    } // end .try
+    finally
+    {
+        IL_0015: ldloca.s ds
+        IL_0017: constrained. .DisposableStruct
+        IL_001d: callvirt instance void [mscorlib]System.IDisposable::Dispose()
+        IL_0022: endfinally
+    } // end handler
+
+    IL_0023: ret
+} // end of method Program::UsingStruct
+从IL上看，在IL_0009处有一条box指令，但那是为了DoSomething调用，而不是为了finally中的Dispose调用，而在IL_001d处的Dispose方法调用却只是使用了callvirt指令。尽管没有显式的装箱操作，但callvirt指令按理说是需要查找虚方法表的——非对象似乎是没有虚方法表的啊？此外，上面一行的constrained又是什么呢？看了MSDN上的说明才发现它才是这个问题的关键：
+
+
+
+Format 
+Assembly Format 
+Description 
+
+
+
+FE 16 < T > 
+constrained. thisType 
+Call a virtual method on a type constrained to be type T. 
+
+
+The constrained prefix is designed to allow callvirt instructions to be made in a uniform way independent of whether thisType is a value type or a reference type.
+When a callvirt method instruction has been prefixed by constrained thisType, the instruction is executed as follows:
+
+
+If thisType is a reference type (as opposed to a value type) then ptr is dereferenced and passed as the 'this' pointer to the callvirt of method.
+
+
+If thisType is a value type and thisType implements method then ptr is passed unmodified as the 'this' pointer to a call method instruction, for the implementation of method by thisType.
+
+
+If thisType is a value type and thisType does not implement method then ptr is dereferenced, boxed, and passed as the 'this' pointer to the callvirt method instruction.
+
+
+This last case can occur only when method was defined on Object, ValueType, or Enum and not overridden by thisType. In this case, the boxing causes a copy of the original object to be made. However, because none of the methods of Object, ValueType, and Enum modify the state of the object, this fact cannot be detected.
+
+从这里可以看出，constrained是为了修饰callvirt指令，最终表现会由具体的类型以及调用的方法来决定。假如这里要产生装箱，则必须满足第3点：针对值类型，调用定义在Object等“基类”中的方法，例如最典型的ToString或GetHashCode，而我们这里要调用的Dispose方法显然不在此列。马后炮地想想也是，不就是调用一个现成的方法嘛，值类型又不能继承，它的方法入口都是确定的，又何必装箱，又何必查找虚方法表？
+后来我又一不小心搜到了StackOverflow上与Phil Hacck博客上的明确说法。这让我有些郁闷，假如我早点知道这在网上有答案，我就不用花实现去调查，甚至已经开始准备这篇文章了。还好中间我还走过一些“弯路”，也算是给世界增加一点新资料吧。由于之前我不知道这里的关键在于constrained指令，我还把这个方法JIT后的代码打印了出来（所有地址都省去了高位的000007fe）：
+Normal JIT generated code
+Program.UsingStruct()
+Begin 87d40120, size 63
+
+...\Program.cs @ 32:
+87d40120    push    rbp
+87d40121    sub     rsp,30h
+87d40125    lea     rbp,[rsp+20h]
+87d4012a    mov     qword ptr [rbp],rsp
+87d4012e    mov     byte ptr [rbp+8],0 // 初始化DisposableStruct对象
+87d40132    mov     byte ptr [rbp+8],0
+
+...\Program.cs @ 33:
+87d40136    lea     rcx,[87c248b0]
+87d4013d    lea     rdx,[rbp+8] // 准备装箱的值类型对象
+87d40141    call    clr+0x2670 (e7392670) (JitHelp: CORINFO_HELP_BOX)
+87d40146    mov     rcx,rax // 装箱操作的返回值赋值给rcx作为参数
+87d40149    call    87c2c020 (Program.DoSomething(System.Object), ...)
+87d4014e    xchg    ax,ax
+87d40150    nop
+
+...\Program.cs @ 35:
+87d40151    lea     rcx,[rbp+8] // 准备调用Dispose的值类型对象作为参数
+87d40155    call    87c2c0e0 (DisposableStruct.Dispose(), ...)
+87d4015a    nop
+87d4015b    lea     rsp,[rbp+10h]
+87d4015f    pop     rbp
+87d40160    ret
+
+...\Program.cs @ 32:
+87d40161    push    rbp
+87d40162    sub     rsp,30h
+87d40166    mov     rbp,qword ptr [rcx+20h]
+87d4016a    mov     qword ptr [rsp+20h],rbp
+87d4016f    lea     rbp,[rbp+20h]
+
+...\Program.cs @ 35:
+87d40173    lea     rcx,[rbp+8]
+87d40177    call    87c2c0e0 (DisposableStruct.Dispose(), ...)
+87d4017c    nop
+87d4017d    add     rsp,30h
+87d40181    pop     rbp
+87d40182    ret
+从上方的汇编指令可以看出，调用DoSomething之前的确存在一次装箱操作，但在调用Dispose方法时却没有装箱。从中我们还可以顺便得知，假如没有异常出现，代码会顺利地从头执行到87d40160处返回，不会对性能产生负面影响。换句话说，“捕获”异常会让程序运行缓慢，但使用try...catch本身却不会。

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{%block main%}
+<div class="container-liquid">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="col-md-2 no-right-padding right-border">
+        	
+        </div>              
+        <div class="col-md-8">
+        <!-- {% autoescape off %} {{note.content}} {%endautoescape%} -->
+        	<div class="my-panel-group">
+		        <div class="panel panel-default">
+				<div class="panel-heading"><span class='glyphicon glyphicon-user
+					'></span> 基本信息</div>
+					<p>
+						出生日期：1987年10月
+大学本科：陕西师范大学（211）
+本科专业：计算机科学与技术
+毕业时间：2010年7月
+
+					</p>
+					<ul class="list-group">
+				    <li class="list-group-item">林志雄</li>
+				    <li class="list-group-item">13641165094</li>
+				    <li class="list-group-item">lessisawesome@gmail.com</li>
+				    <li class="list-group-item">Porta ac consectetur ac</li>
+				    <li class="list-group-item">Vestibulum at eros</li>
+				  </ul>		  							  
+				</div>
+	        
+				<div class="panel panel-default">
+					<div class="panel-heading">工作经历</div>
+		  			
+				  <table class="table">
+				  	<tr><th>#</th><th>公司名称</th><th>起始</th><th>结束</th><th>公司地址</th><th>工作职位</th></tr>
+					<tr><td>1</td><td><a href="">Objeciva</a></td><td>2010年3月</td><td>2011年8月</td><td>西安</td><td>软件工程师</td></tr>
+					<tr><td>2</td><td><a href="http://www.thoughtworks.com/cn/">ThoughtWorks</a></td><td>2011年8月</td><td>2012年3月</td><td>西安</td><td>软件工程师</td></tr>
+					<tr><td>3</td><td><a href="http://www.pwccn.com/home/chi/index_chi.html">普华永道</a></td><td>2012年4月</td><td>2014年4月</td><td>北京</td><td>软件工程师</td></tr>
+				  </table>
+				</div>
+			
+			</div><!-- panel-group -->
+
+
+
+        </div>
+
+
+
+
+
+
+
+        <div class="col-md-2 no-right-padding right-border">
+        	
+        </div>
+{%endblock%}

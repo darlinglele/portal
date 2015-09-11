@@ -1,0 +1,44 @@
+在.NET里“事件”是一种无比常见的成员，我在项目里也经常暴露一些事件供其他地方使用。在.NET里定义一个事件会需要一个委托类型，一般来说我们会使用.NET里自带的System.EventHandler类型，它的签名是：
+public delegate void EventHandler<TEventArgs>(object sender, TEventArgs e);
+但这个定义其实有稍许缺陷。例如，如果您在自己的项目中编写了这样的代码，Resharper这样的工具便会提醒您“TEventArgs可以设为逆变”。协变和逆变是C# 4中引入的非常有用的功能，可以在保证类型安全的前提下让代码变的更加好用。因此，我在项目里往往会使用自己的CoEventHandler委托类型：
+public delegate void CoEventHandler<in TSender, in TEventArgs>(TSender sender, TEventArgs args);
+可以看出，我们只需要为TSender增加一个in标记就够了，我们甚至可以连sender的类型也一并逆变起来。接下来我们自然可以用这个委托类型来定义事件，例如：
+public class MyClass
+{
+    public event CoEventHandler<MyClass, List<int>> MyEvent;
+}
+有人可能会说：这不行啊，事件参数怎么可以不是System.EventArgs的子类呢？我的回应是：谁说事件参数一定要是它的子类？这只是一种常见的“约定”，最多上升为“规范”，但这种限制其实并没有带来额外的好处。事实上.NET框架本身也意识到这种限制是没有什么必要的，因此它在.NET 4.5中也将这一限制去除了。正如文章最初贴出的代码，其实是.NET 4.5中的定义，而在.NET 4里的定义却是这样的：
+public delegate void EventHandler<TEventArgs>(object sender, TEventArgs args)
+    where TEventArgs : System.EventArgs;
+看见没？.NET 4.5将这个没有什么必要的限制去掉了，在以后的文章中我也会描述下这么做的优势。而我们现在只不过更进一步，将两个参数都泛型化，并让它们支持协变而已。于是，我们便可以为事件添加各种兼容的接口了：
+static void StrongTypedHandler(MyClass sender, List<int> args) { }
+
+static void WeakerTypedHandler(object sender, ICollection<int> args) { }
+
+static void Main()
+{
+    var myClass = new MyClass();
+    myClass.MyEvent += (CoEventHandler<MyClass, List<int>>)StrongTypedHandler;
+    myClass.MyEvent += (CoEventHandler<object, ICollection<int>>)WeakerTypedHandler;
+}
+这段代码完全可以编译通过，但是执行时却会抛出异常：
+System.ArgumentException: Delegates must be of the same type.
+   at System.MulticastDelegate.CombineImpl(Delegate follow)
+   at TestConsole.MyClass.add_MyEvent(CoEventHandler`2 value)
+   at TestConsole.Program.Main() in ...
+还记得我们用上面最普通的方式定义一个事件的时候，C#编译器会帮我们生成什么样的代码吗（不知道的同学请参考CLR via C#）？“自动事件”生成的代码，最终会使用Delegate.Combine来实现多重委托。不过，尽管C#编译器和运行时支持逆变，但Delegate.Combine是不支持的，这就导致了运行时异常。因此，假如您定义的事件支持逆变，则完全不能“偷懒”去使用“自动事件”，必须编写代码来手动增删事件处理器。
+当然，事实上这个问题跟“事件”没有必然联系，各种期望使用多重分派委托的地方都会遇到相同的问题，所以我们解决的问题完全可以更泛化一些。我们可以构造一个MulticastDelegateManager来解决这个问题，定义如下：
+public class MulticastDelegateManager<TDelegate>
+{
+    public MulticastDelegateManager(bool isThreadSafe) { }
+
+    public void Add(TDelegate value) { }
+
+    public void Remove(TDelegate value) { }
+
+    public void Invoke(Action<TDelegate> invoke) { }
+}
+其中Add和Remove自然是用于添加和删除一个委托，而Invoke在执行时则需要传入一个“执行器”，用于执行每个已经添加的委托对象，这样便可以统一。
+构造一个MulticastDelegateManager对象时，我们可以指明它是否会工作在多线程的环境里。假如我们确定这个事件无需多线程支持，则可以将isThreadSafe设为false，于是各类操作将会放弃多线程保护，对效率会有一定好处。反之，则Add、Remove以及Invoke方法都可能在一个并发环境中使用。具体一点便是，Invoke本身在调用时无法“重入”，每次调用都是互斥的。但是，尽量也让并发度高一些为好。
+此外，传统多重委托在执行时，假如某个委托抛出了异常，测后续的委托便不会执行了。这对于“事件”来说可能会产生较为严重的问题。因此，我希望Invoke在执行时必须保证每个委托被调用过。当然，我们也不能简单的吞噬异常。
+要不您来试试看写这么一个MulticastDelegateManager？不过请不要仅仅给出“思路”，千万要写下代码来，否则您的思路不说也罢。这个问题的确简单，但和上次的问题一样，不仔细考虑的话还是挺容易出现一些问题的。

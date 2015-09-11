@@ -1,0 +1,88 @@
+Windows中有一项功能，是可以在任务管理器中查看CPU的使用率，管理器以图形使用率在不同的时间点的 点上的使用情况。 通常情况下你只能看到一条不规律的曲线：
+
+那怎么样让CPU使用率变得有规律点呢？能不能“画出”一条优雅的正弦曲线呢？
+答案是肯定的，在编程之美书中的第一个有趣的例子就是如何让CPU听话的画出正弦曲线。 如果了解一下CPU使用率是如何计算，那么问题就非常的简单。
+在管理器中CPU使用率的刷新时间默认是1秒， 所以CPU如果在这一秒中用了500毫秒来做事情，那么使用率就是50%。 接下来我们的问题就是如何让CPU用500毫秒来做事情，而另外500毫秒空闲呢？ 作为程序员你一定非常熟悉让CPU100%的方法，死循环！我们可以控制CPU用500毫秒来死循环，另外500毫秒来”休息“（Sleep），这样CPU的使用率就可以控制在50%了！通过同样的方法，可以让CPU的使用率呈任意值，接下来只要控制在不同时间上的使用率，就可以画出一条华丽的正弦曲线。
+先来看看效果图：
+
+
+
+
+这是一个单核心的CPU使用率曲线， 在上面我们已经知道怎么控制CPU的使用率，但是我们还要控制不同时间点上的使用率，让使用率跟时间成正弦周期关系：
+周期越长，每秒的变化越小，曲线就越平滑。函数表示就是：Math.sin((end - start) / 1000 * 2 * 3.14159 / periodic) 
+
+
+用Java来实现的代码如下：
+其中 new Sine(50, 8)表示初始化正弦周期是50秒，CPU有8个核心。
+
+public class Program {
+    public static void main(String[] args) {
+        new Sine(50, 8).draw();
+    }
+}
+
+public class Sine {
+    private final int periodic;
+    private final int coreNumber;
+
+    public Sine(int periodic, int coreNumber) {
+        this.periodic = periodic;
+        this.coreNumber = coreNumber;
+    }
+
+    public void draw() {
+        for (int i = 0; i < this.coreNumber; i++) {
+            Thread thread = new Thread(new Runner(this.periodic));
+            thread.start();
+        }
+    }
+}
+
+import static java.lang.Thread.sleep;
+
+public class Runner implements Runnable {
+
+    private final int periodic;
+    private int usage = 50;
+
+    public Runner(int periodic) {
+        this.periodic = periodic;
+    }
+
+    @Override
+    public void run() {
+        long start = System.currentTimeMillis();
+        while (true) {
+            boolean timeout = false;
+            long s = System.currentTimeMillis();
+            while (!timeout) {
+                long c = System.currentTimeMillis();
+                if (c - s > usage * 10) {
+                    timeout = true;
+                }
+            }
+
+            try {
+                sleep((100 - usage) * 10);
+            } catch (InterruptedException e) {
+
+            }
+
+            long end = System.currentTimeMillis();
+            changeUsage(start, end);
+        }
+    }
+
+    private void changeUsage(long start, long end) {
+        this.usage = (int) (50 + Math.sin((end - start) / 1000 * 2 * 3.14159 / periodic) * 50);
+    }
+
+}
+
+
+Github：https://github.com/darlinglele/cpu
+
+                作者：u011459840 发表于2013-9-16 9:56:07 原文链接
+
+
+            阅读：298 评论：0 查看评论

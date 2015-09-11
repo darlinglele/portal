@@ -1,0 +1,46 @@
+(抱歉本文的格式简单，我是在很秘密的情况下写的。)
+公司的一个合伙人，也是公司的产品经理/人资经理/产品设计师，总喜欢捉弄我们。比如，在万圣节派对上，你能看到一个跟我本人一样大小的我的相片，那是她从我的Facebook上找到的。在图片上，她用说话泡泡的形式加了一句自白：“生日许愿时我许的最大的愿望是要有8个睾丸并找到一个像Jodie Foster那样漂亮的12岁的雏妓。”她趁我出去吃午饭时把它挂了出来。问题是，你很难捉弄她，因为她时刻防备着别人对她使坏。
+但是，她对计算机是个外行。
+有一天，趁她去开会，我在她的MAC笔记本上安装了我的远程访问公共密钥，打开了她的远程登录功能，并安装了下面这个脚本程序：
+#!/bin/bash
+
+while [ 1 ]
+do
+    sleep $(( ($RANDOM % 10) * 100))
+    say -v Whisper i 
+done
+
+(上面这段脚本的作用是让电脑随机的发出“i”字母——也就是“我”的声音。其中的命令say是Mac OS X里文字转语言的工具，在linux环境里，你可以使用espeak命令，效果是一样的。)
+这一招让她惊恐了好几天。当她坚持说她的电脑桌对她说话时，所有人都拿异样的眼光看着她。但这一招必须是她打开了电脑的音量才有效，于是我改进了一下：
+#!/bin/bash
+
+while [ 1 ]
+do
+    sleep $(( ($RANDOM % 10) * 100))
+    osascript -e "set Volume 2" #主动设置音量大小
+    say -v Whisper i
+    osascript -e "set Volume 0"  #最后让电脑消音
+done
+
+这样会产生一个额外的效果——如果她在听音乐，她会突然听到一个低沉声音说“我(I)”，然后就悄然无声了。
+我用这个方法折磨了她一周后，我又手工运行了下面的命令：
+open http://wwwwwwwww.jodi.org  #这是一个很怪异的网页
+
+（网页截图）
+网页截图
+这让她感到很困惑，在办公室里研究这个页面好长一阵子。之后，我又搞了一个恶作剧。我知道她拍了很多照片，本来是让我们看看里面的问题，然后反馈给她，全在电脑桌面上，我把这些图片全部换成了下面这张图片：
+http://www.historicalstockphotos.com/images/xsmall/2122_old_man_sleeping_on_porch.jpg
+(截图)
+
+今天，我给她的机器中安装了另外一个applescript，就是在机器对她说话之前，下面这些代码会执行：
+tell application "Finder"
+set desktop picture to file {"Macintosh HD:Users:huntwelch:.ssh:ring.jpg"}
+delay 0.2
+set desktop picture to file {"Macintosh HD:Library:Desktop Pictures:Solid Colors:Solid Aqua Blue.png"}
+end tell
+
+里面的ring.jpg实际上是下面这张照片(提示：胆小勿看)：
+http://www.retrocrush.com/scary/animatedring2.gif
+我打算用这个方法折磨她两个星期，时间太长怕她会发现是我干的，另外，还怕她会吓出心理疾病。之后我需要发明出新的方法，大家有什么建议吗？
+提示：她的笔记本的操作系统是SX 10.9，只能用命令行访问。
+请阅读全文：程序员的复仇方式。本文由外刊IT评论网(www.vaikan.com)原创发表文章地址：程序员的复仇方式，[英文原文：LINK ]你也许会喜欢这些文章：程序员的纹身Rap说唱音乐《努力编码—Java生活》MV电影《Java风云》预告片视频：一个外国程序员12小时的编程生活的记录搞笑视频：结对编程实践指导

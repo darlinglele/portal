@@ -1,0 +1,129 @@
+话说“字符串”是我们平时最常用的数据类型之一，它表示一个字符序列。在大部分的语言中，字符串还是一个不可变（Immutable）的数据类型。“不可变”意味着要改变则只能生成新的字符串，无论是连接两个字符串，获取或是替换字符串的一部分，这对于内存和CPU都是不可避免的开销。在一般情况下，只要使用合理这些开销都不会构成大问题。不过对于某些类型的应用，例如我前段时间在工作中涉及到的编辑器（IDE那种），就会带来较多麻烦，于是便用到了一个名为Rope的数据结构。Rope其实是一种很简单，很符合直觉的树状数据结构，也常用于表达一个字符序列，不过更适合需要大量修改的场景。不过，我们还是先来回顾一下.NET与Java中的String类型吧。
+.NET中的String类型
+.NET中的字符串是个最简单的包含了一个“长度”与“首字母”的结构。
+public class String {
+    private int m_stringLength;
+    private char m_firstChar;
+}
+严格来说，字符串是一个与运行时紧密结合的“特殊类型”，它的m_firstChar其实只是标记了第一个字符的地址。从源代码中可以看出，String类型的构造函数全是extern方法，它的辅助方法几乎都离不开unsafe代码，例如最简单的字符串连接操作：
+internal extern static String FastAllocateString(int length);
+
+internal static unsafe void wstrcpy(char* dmem, char* smem, int charCount) {
+    // memory copy...
+}
+
+private static unsafe void FillStringChecked(String dest, int destPos, String src) {
+    if (src.Length > dest.Length - destPos) {
+        throw new IndexOutOfRangeException();
+    }
+
+    fixed (char* pDest = &dest.m_firstChar)
+    fixed (char* pSrc = &src.m_firstChar) {
+        wstrcpy(pDest + destPos, pSrc, src.Length);
+    }
+}
+
+public static String Concat(String str0, String str1) {
+    // return String.Empty if both null or empty
+
+    int str0Length = str0.Length;
+
+    String result = FastAllocateString(str0Length + str1.Length);
+
+    FillStringChecked(result, 0, str0);
+    FillStringChecked(result, str0Length, str1);
+
+    return result;
+}
+wstrcpy做的只是简单的内存复制工作，但它的实现却有将近300行代码。原因在于，假如要获得最好的性能，不同平台（x86/x64/IA64/ARM），当前地址是否对齐，每次复制多少字节等等，都是需要考虑的因素，因此这个方法用到了大量条件编译选项。事实上整个String类型都是这样，对于这种被大量使用的底层类库，.NET内部可谓进行了不遗余力的优化。
+还有个例子便是取字符串的Substring方法：
+private unsafe string InternalSubString(int startIndex, int length, bool fAlwaysCopy) {
+    if (startIndex == 0 && length == this.Length && !fAlwaysCopy) {
+        return this;
+    }
+
+    String result = FastAllocateString(length);
+
+    fixed (char* dest = &result.m_firstChar)
+    fixed (char* src = &this.m_firstChar) {
+        wstrcpy(dest, src + startIndex, length);
+    }
+
+    return result;
+}
+从中可以看出，无论是字符串连接还是取部分字符串，CPU和内存的消耗都与目标字符串的长度线性相关。换句话说，字符串越长，代价越高，假如要反复大量地操作一个大型的字符串，则会对性能产生很大影响。
+这些应该都是每个.NET程序员都了若指掌的基础。
+Java中的String类型
+严格来说，“Java”是一个标准，而没有限制特定的实现方式，我们这里分析的是使用最广泛的OpenJDK实现。例如在OpenJDK 7里String类型是这样定义的：
+public final class String {
+    /** The value is used for character storage. */
+    private final char value[];
+
+    /** The offset is the first index of the storage that is used. */
+    private final int offset;
+
+    /** The count is the number of characters in the String. */
+    private final int count;
+}
+此外还有一个hash字段，这样单个字符串的哈希值只需计算一次即可。这里我们可以看出OpenJDK 7与.NET的不同，后者是直接包含字符序列的内容，而前者则是保留一个字符数组，并记录起始位置及其偏移量。这么做最大的好处是substring方法无需复制内存，而完全可以重用内部的字符数组：
+// Package private constructor which shares value array for speed.
+String(int offset, int count, char value[]) {
+    this.value = value;
+    this.offset = offset;
+    this.count = count;
+}
+
+public String substring(int beginIndex, int endIndex) {
+    // throw IndexOutOfBoundsException if necessary
+
+    return ((beginIndex == 0) && (endIndex == count)) ? this :
+        new String(offset + beginIndex, endIndex - beginIndex, value);
+}
+String类包含有一个package访问级别的构造函数，用于共享字符数组以提高性能。此外还有一个公有的构造函数：
+public String(char value[], int offset, int count) {
+    // throw StringIndexOutOfBoundsException if necessary
+
+    this.offset = 0;
+    this.count = count;
+    this.value = Arrays.copyOfRange(value, offset, offset + count);
+}
+公有的构造函数会重新复制一份字符数组，这样就杜绝了外部修改的可能性。
+共享字符数组的优势显而易见，而劣势便是成为了Java程序中最常见的内存泄露原因之一。说起来我到十八摸以后写的第一个程序便遇到了这个问题：从服务器端得到一个长长的字符串形式的数据，经过一个内部解析类库获得一小个片段（可能只是记录个ID）并保存在内存中。不过后来发现内存的占用量上升的很快，且稳定后比预想地要高的多，通过Memory Profiling发现原来是这一小段字符串还持有原来完整的内容。知道了原因之后自然容易解决，用以下的构造函数重新生成一个新的字符串即可：
+public String(String original) {
+    int size = original.count;
+    char[] originalValue = original.value;
+    char[] v;
+    if (originalValue.length > size) {
+        // The array representing the String is bigger than the new
+        // String itself.  Perhaps this constructor is being called
+        // in order to trim the baggage, so make a copy of the array.
+        int off = original.offset;
+        v = Arrays.copyOfRange(originalValue, off, off+size);
+    } else {
+        // The array representing the String is the same
+        // size as the String, so no point in making a copy.
+        v = originalValue;
+    }
+    this.offset = 0;
+    this.count = size;
+    this.value = v;
+}
+有意思的是，在未来的OpenJDK 8里，String类的这方面表现已经改变了：
+public final class String  {
+    /** The value is used for character storage. */
+    private final char value[];
+}
+OpenJDK 8放弃了保留了近二十年的设计，让String对象使用各自独立的字符数组，就跟.NET一贯以来的做法一样。这样，它的相关方法如substring也有了相应改变：
+public String substring(int beginIndex, int endIndex) {
+    // throw StringIndexOutOfBoundsException if necessary
+
+    int subLen = endIndex - beginIndex;
+    if (subLen < 0) {
+        throw new StringIndexOutOfBoundsException(subLen);
+    }
+    return ((beginIndex == 0) && (endIndex == value.length)) ? this
+            : new String(value, beginIndex, subLen);
+}
+这里直接调用的已经是之前列举过的，会复制字符数组内容的公有构造函数了。所以说，“Java”只是一个标准，可以有各种实现。从外部表现看来，OpenJDK 8的String类相对于之前没有任何变化。
+总结
+可以看出，无论是在.NET还是Java中，字符串操作往往都涉及大量的内存复制，而Rope数据结构便是为了规避这一点而设计出来的。正如文章开头所讲的那样，Rope是一种树状的数据结构，同样用于表现一个字符序列。Rope很简单，也很符合直觉，一篇简单的论文即可说清，Wikipedia上也有部分描述。下篇文章里我会简单描述Rope这个数据结构，包括它的特点和常见操作的基本算法等等。

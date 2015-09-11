@@ -1,0 +1,62 @@
+<img class="cover" src="/static/images/javascript-declare.png"/>
+<p>今天看到一个面试题是这样的：</p>
+<pre class="prettyprint">
+var a = 10;
+function test() {
+    a = 5;
+    alert(a);
+    alert(this.a);
+    var a;
+    alert(this.a);
+    alert(a);
+}
+</pre>
+<p>
+请问test(), new test() 的返回值分别是？
+<br>
+正确答案是：5, 10, 10, 5和 5, undefined, undefined, 5
+<br>
+我的答案：5，5，5，undefined和 5, undefined, undefined, 5
+<br>
+</p>
+<p>
+在此之前，我一直误以为JavaScript是顺序的解释执行， 声明部分一定要在调用之前， 然而这是一个误区，必要时还得“张前顾后”。 事实上作用域内的声明无论在那里，被提前到开始的部分， 上面的代码等同以下的写法：
+</p>
+<pre class="prettyprint">
+var a = 10;
+function test() {
+    var a;
+    a = 5;
+    alert(a);
+    alert(this.a);
+    alert(this.a);
+    alert(a);
+}
+</pre>
+
+<p>
+再如：
+</p>
+
+<pre class="prettyprint">
+var a = 0;
+function test() {
+    a = 5;
+    alert(a);
+    var a = 10;
+    alert(a)
+}
+</pre>
+
+<p>等同于：</p>
+<pre class="prettyprint">
+var a = 0;
+function test() {
+    var a;
+    a = 5;
+    alert(a);
+    a = 10;
+    alert(a)
+}
+</pre>
+上面的代码都会输出5，10
